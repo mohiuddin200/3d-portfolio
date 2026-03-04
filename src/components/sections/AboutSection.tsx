@@ -190,7 +190,7 @@ export default function AboutSection() {
     <section
       ref={sectionRef}
       id="about"
-      className="relative min-h-screen bg-black py-32"
+      className="relative min-h-screen py-32"
     >
       <div className="max-w-7xl mx-auto px-6">
         {/* ====== Top: Photo + Bio (balanced 2-col) ====== */}

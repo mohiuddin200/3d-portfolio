@@ -101,10 +101,10 @@ export default function SkillsSection() {
     <section
       ref={sectionRef}
       id="skills"
-      className="relative min-h-screen bg-black py-32 overflow-hidden"
+      className="relative min-h-screen py-32 overflow-hidden"
     >
       {/* Background ambient glow */}
-      <div className="absolute inset-0 bg-linear-to-b from-black via-zinc-900/20 to-black pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-b from-transparent via-zinc-900/20 to-transparent pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">

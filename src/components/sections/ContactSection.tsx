@@ -104,7 +104,7 @@ export default function ContactSection() {
     <section
       ref={sectionRef}
       id="contact"
-      className="relative min-h-screen bg-black py-32"
+      className="relative min-h-screen py-32"
     >
       <div className="max-w-7xl mx-auto px-6">
         {/* Section heading */}

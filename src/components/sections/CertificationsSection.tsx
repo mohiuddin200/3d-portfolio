@@ -47,7 +47,7 @@ export default function CertificationsSection() {
     <section
       ref={sectionRef}
       id="certifications"
-      className="relative min-h-screen bg-black py-32"
+      className="relative min-h-screen py-32"
     >
       <div className="max-w-7xl mx-auto px-6">
         {/* Section heading */}

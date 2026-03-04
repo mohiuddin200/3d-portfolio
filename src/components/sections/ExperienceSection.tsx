@@ -73,7 +73,7 @@ export default function ExperienceSection() {
     <section
       ref={sectionRef}
       id="experience"
-      className="relative min-h-screen bg-black py-24 md:py-32 flex flex-col justify-center overflow-hidden"
+      className="relative min-h-screen py-24 md:py-32 flex flex-col justify-center overflow-hidden"
     >
       {/* Background ambient glow matching dark futuristic theme */}
       <div className="absolute top-1/2 right-[10%] -translate-y-1/2 w-[600px] h-[600px] bg-gold/5 rounded-full blur-[150px] pointer-events-none" />

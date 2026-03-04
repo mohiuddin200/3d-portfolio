@@ -26,7 +26,7 @@ export function Footer() {
   }, [setVariant]);
 
   return (
-    <footer className="border-t border-white/10 bg-black">
+    <footer className="border-t border-white/10">
       <div className="max-w-7xl mx-auto py-8 px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row items-center gap-2 text-sm text-white/50">
           <span>&copy; {new Date().getFullYear()} All rights reserved.</span>

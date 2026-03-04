@@ -126,7 +126,7 @@ export default function HeroSection() {
     <section
       ref={sectionRef}
       id="hero"
-      className="relative h-screen w-full overflow-hidden bg-black"
+      className="relative h-screen w-full overflow-hidden"
     >
       {/* 3D Scene Background */}
       <HeroSceneLoader
