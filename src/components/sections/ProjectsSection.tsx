@@ -250,7 +250,7 @@ export default function ProjectsSection() {
                       <Button
                         asChild
                         variant="outline"
-                        className="border-white/20 text-white hover:border-white/40"
+                        className="border-white/20 text-white hover:border-white/40 hover:bg-white/10 hover:text-white"
                       >
                         <a
                           href={project.githubUrl}

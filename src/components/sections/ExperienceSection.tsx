@@ -93,15 +93,15 @@ export default function ExperienceSection() {
           {/* Left Pane - Timeline / Tabs List */}
           <div ref={leftPaneRef} className="md:w-1/3 shrink-0 relative z-20">
             {/* Mobile horizontal scroller */}
-            <div className="flex overflow-x-auto pb-4 md:hidden space-x-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex overflow-x-auto pb-4 md:hidden gap-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
               {EXPERIENCES.map((exp, index) => {
                 const isActive = activeIndex === index;
                 return (
                   <button
                     key={exp.id}
                     onClick={() => setActiveIndex(index)}
-                    className={`shrink-0 px-6 py-3 rounded-full border transition-all duration-300 font-medium whitespace-nowrap focus:outline-none ${isActive
-                      ? "bg-gold/10 border-gold text-gold shadow-[0_0_15px_rgba(255,215,0,0.2)] scale-105"
+                    className={`shrink-0 px-5 py-2.5 rounded-full border text-sm transition-all duration-300 font-medium whitespace-nowrap focus:outline-none ${isActive
+                      ? "bg-gold/10 border-gold text-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]"
                       : "bg-white/5 border-white/10 text-white/50 hover:text-white hover:bg-white/10"
                       }`}
                   >

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 
 export function ScrollProgress() {
   const barRef = useRef<HTMLDivElement>(null);
@@ -11,22 +11,22 @@ export function ScrollProgress() {
 
     gsap.set(barRef.current, { scaleX: 0 });
 
-    const trigger = ScrollTrigger.create({
-      trigger: document.documentElement,
-      start: "top top",
-      end: "bottom bottom",
-      scrub: 0.3,
-      onUpdate: (self) => {
-        gsap.to(barRef.current, {
-          scaleX: self.progress,
-          duration: 0.1,
-          ease: "none",
-        });
-      },
-    });
+    const updateProgress = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+      gsap.to(barRef.current, {
+        scaleX: progress,
+        duration: 0.1,
+        ease: "none",
+      });
+    };
+
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    updateProgress();
 
     return () => {
-      trigger.kill();
+      window.removeEventListener("scroll", updateProgress);
     };
   }, []);
 
