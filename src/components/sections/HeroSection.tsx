@@ -5,6 +5,7 @@ import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { motion, AnimatePresence } from "motion/react";
 import { withSceneLoader } from "@/components/three/SceneLoader";
 import { useMousePosition } from "@/hooks/useMousePosition";
+import { useAnimation } from "@/components/providers/AnimationProvider";
 import { HERO_TITLES, HERO_SUBTITLE } from "@/data/hero";
 
 const HeroSceneLoader = withSceneLoader(
@@ -17,6 +18,7 @@ export default function HeroSection() {
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
   const mouse = useMousePosition();
+  const { reducedMotion } = useAnimation();
 
   const [titleIndex, setTitleIndex] = useState(0);
 
@@ -130,6 +132,7 @@ export default function HeroSection() {
       <HeroSceneLoader
         mouseX={mouse.normalizedX}
         mouseY={mouse.normalizedY}
+        reducedMotion={reducedMotion}
         className="z-0"
       />
 
@@ -141,38 +144,40 @@ export default function HeroSection() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 backdrop-blur-md"
+            className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/5 px-4 py-1.5 backdrop-blur-md shadow-[0_0_15px_rgba(255,215,0,0.1)]"
           >
             <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-pulse"></span>
             <span className="text-sm font-medium text-white/80 tracking-wide uppercase">Hello, I&apos;m</span>
           </motion.div>
 
           {/* Name */}
-          <h1
-            ref={nameRef}
-            className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white text-center leading-tight tracking-tight mb-2"
-            style={{ perspective: "800px" }}
-          >
-            {name.split("").map((char, i) => (
-              <motion.span
-                key={i}
-                className="name-char inline-block cursor-pointer"
-                style={{
-                  opacity: 0,
-                  color: char === " " ? undefined : undefined,
-                }}
-                whileHover={{
-                  y: -10,
-                  color: "#FFD700",
-                  scale: 1.1,
-                  rotate: [-5, 3, -2, 4, -4, 2, -3, 5, -1][i % 9],
-                  transition: { duration: 0.2 },
-                }}
-              >
-                {char === " " ? "\u00A0" : char}
-              </motion.span>
-            ))}
-          </h1>
+          <div className="relative holographic-scanlines">
+            <h1
+              ref={nameRef}
+              className="holographic-title holographic-flicker text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-bold text-white text-center leading-tight tracking-tight mb-2"
+              style={{ perspective: "800px" }}
+            >
+              {name.split("").map((char, i) => (
+                <motion.span
+                  key={i}
+                  className="name-char inline-block cursor-pointer"
+                  style={{
+                    opacity: 0,
+                    color: char === " " ? undefined : undefined,
+                  }}
+                  whileHover={{
+                    y: -10,
+                    color: "#FFD700",
+                    scale: 1.1,
+                    rotate: [-5, 3, -2, 4, -4, 2, -3, 5, -1][i % 9],
+                    transition: { duration: 0.2 },
+                  }}
+                >
+                  {char === " " ? "\u00A0" : char}
+                </motion.span>
+              ))}
+            </h1>
+          </div>
 
           {/* Rotating Title */}
           <div className="h-12 sm:h-16 md:h-20 flex items-center justify-center overflow-hidden mb-8">
@@ -183,7 +188,7 @@ export default function HeroSection() {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: -40, opacity: 0 }}
                 transition={{ duration: 0.5, ease: "easeInOut" }}
-                className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white/90 text-center bg-clip-text"
+                className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white/90 text-center holographic-subtitle"
               >
                 {HERO_TITLES[titleIndex]}
               </motion.h2>
@@ -193,7 +198,7 @@ export default function HeroSection() {
           {/* Subtitle */}
           <p
             ref={subtitleRef}
-            className="text-base sm:text-lg md:text-xl text-white/60 text-center max-w-2xl font-light"
+            className="text-base sm:text-lg md:text-xl text-white/80 text-center max-w-2xl font-light"
             style={{ opacity: 0 }}
           >
             {HERO_SUBTITLE}

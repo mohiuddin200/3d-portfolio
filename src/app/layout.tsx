@@ -4,6 +4,7 @@ import { AnimationProvider } from "@/components/providers/AnimationProvider";
 import { CursorProvider } from "@/components/providers/CursorProvider";
 import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider";
 import { CustomCursor } from "@/components/cursor/CustomCursor";
+import { BackgroundMesh } from "@/components/layout/BackgroundMesh";
 import { SITE } from "@/lib/constants";
 import "./globals.css";
 
@@ -58,6 +59,7 @@ export default function RootLayout({
           <CursorProvider>
             <SmoothScrollProvider>
               <CustomCursor />
+              <BackgroundMesh />
               {children}
             </SmoothScrollProvider>
           </CursorProvider>
