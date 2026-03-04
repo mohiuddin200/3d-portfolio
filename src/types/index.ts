@@ -53,4 +53,4 @@ export interface SocialLink {
   size: "sm" | "md" | "lg";
 }
 
-export type CursorVariant = "default" | "link" | "project" | "text";
+export type CursorVariant = "default" | "link" | "text";

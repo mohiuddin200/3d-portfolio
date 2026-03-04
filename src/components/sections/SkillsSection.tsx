@@ -1,19 +1,68 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, type ComponentType } from "react";
 import { gsap } from "@/lib/gsap";
 import { motion, AnimatePresence } from "motion/react";
 import { useSectionInView } from "@/hooks/useSectionInView";
-import * as LucideIcons from "lucide-react";
 import { SKILLS, SKILL_CATEGORIES } from "@/data/skills";
 
-const IconRender = ({ iconName, color, className = "w-6 h-6" }: { iconName?: string; color: string; className?: string }) => {
-  if (!iconName) return null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const IconNames = LucideIcons as unknown as Record<string, React.ComponentType<any>>;
-  const Icon = IconNames[iconName];
-  if (!Icon) return <LucideIcons.CheckCircle className={className} style={{ color }} />;
-  return <Icon className={className} style={{ color }} />;
+import {
+  SiReact,
+  SiNextdotjs,
+  SiTypescript,
+  SiTailwindcss,
+  SiShadcnui,
+  SiRedux,
+  SiHtml5,
+  SiNodedotjs,
+  SiExpress,
+  SiSupabase,
+  SiPostgresql,
+  SiPrisma,
+  SiMongodb,
+  SiGit,
+  SiGithub,
+  SiDocker,
+  SiPostman,
+  SiFigma,
+  SiOpenai,
+  SiLangchain,
+  SiCss,
+} from "react-icons/si";
+import { VscJson } from "react-icons/vsc";
+import { TbBrandAws, TbBrandFramerMotion } from "react-icons/tb";
+import { BsRobot, BsCpu } from "react-icons/bs";
+
+type IconProps = { className?: string; style?: React.CSSProperties };
+
+const SKILL_ICON_MAP: Record<string, ComponentType<IconProps>> = {
+  "React JS": SiReact,
+  "Next JS": SiNextdotjs,
+  "TypeScript": SiTypescript,
+  "Tailwind CSS": SiTailwindcss,
+  "Shadcn UI": SiShadcnui,
+  "Zustand": TbBrandFramerMotion,
+  "Redux Toolkit": SiRedux,
+  "HTML/CSS": SiHtml5,
+  "CSS": SiCss,
+  "Node.js": SiNodedotjs,
+  "Express.js": SiExpress,
+  "Supabase": SiSupabase,
+  "PostgreSQL": SiPostgresql,
+  "Prisma": SiPrisma,
+  "Convex DB": VscJson,
+  "MongoDB": SiMongodb,
+  "REST APIs": VscJson,
+  "Git": SiGit,
+  "GitHub": SiGithub,
+  "Docker": SiDocker,
+  "AWS": TbBrandAws,
+  "Postman": SiPostman,
+  "Figma": SiFigma,
+  "Flowise AI": BsRobot,
+  "AI SDK": BsCpu,
+  "OpenAI API": SiOpenai,
+  "LangChain": SiLangchain,
 };
 
 export default function SkillsSection() {
@@ -110,11 +159,11 @@ export default function SkillsSection() {
         {/* Skills Grid */}
         <motion.div
           layout
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-6 relative z-10"
+          className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 lg:gap-4 relative z-10"
         >
           <AnimatePresence mode="popLayout">
             {filteredSkills.map((skill, index) => {
-              const categoryColor = SKILL_CATEGORIES.find(c => c.id === skill.category)?.color || "#FFD700";
+              const Icon = SKILL_ICON_MAP[skill.name];
 
               return (
                 <motion.div
@@ -129,38 +178,26 @@ export default function SkillsSection() {
                     ease: "easeOut"
                   }}
                   whileHover={{ y: -8, scale: 1.05, zIndex: 10 }}
-                  className="group relative rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-md overflow-hidden flex flex-col items-center text-center hover:border-white/30 transition-colors duration-500"
+                  className="group relative rounded-xl border border-white/10 bg-black/40 p-4 backdrop-blur-md overflow-hidden flex flex-col items-center text-center hover:border-white/30 transition-colors duration-500"
                 >
                   {/* Glowing background on hover */}
                   <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 rounded-2xl"
-                    style={{ background: `radial-gradient(circle at center, ${categoryColor}, transparent 70%)` }}
+                    className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 rounded-xl"
+                    style={{ background: "radial-gradient(circle at center, #FFD700, transparent 70%)" }}
                   />
 
-                  <div className="relative mb-4 p-4 rounded-xl bg-white/5 border border-white/5 group-hover:scale-110 group-hover:bg-white/10 transition-all duration-500 shadow-inner">
-                    <IconRender iconName={skill.icon} color={categoryColor} className="w-8 h-8 md:w-10 md:h-10 transition-transform duration-500 group-hover:rotate-12" />
+                  <div className="relative mb-3 p-3 rounded-lg bg-white/5 border border-white/5 group-hover:scale-110 group-hover:bg-white/10 transition-all duration-500 shadow-inner">
+                    {Icon ? (
+                      <Icon className="w-6 h-6 md:w-7 md:h-7 transition-transform duration-500 group-hover:rotate-12" style={{ color: "#FFD700" }} />
+                    ) : (
+                      <div className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-gold/20" />
+                    )}
                   </div>
 
-                  <h3 className="text-white font-medium mb-1 z-10">{skill.name}</h3>
-                  <p className="text-white/40 text-xs uppercase tracking-wider mb-4 z-10">
+                  <h3 className="text-white text-sm font-medium mb-0.5 z-10">{skill.name}</h3>
+                  <p className="text-white/40 text-[10px] uppercase tracking-wider mb-3 z-10">
                     {SKILL_CATEGORIES.find(c => c.id === skill.category)?.label}
                   </p>
-
-                  {/* Progress bar */}
-                  <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden z-10 mt-auto">
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{ backgroundColor: categoryColor, boxShadow: `0 0 10px ${categoryColor}` }}
-                      initial={{ width: 0 }}
-                      whileInView={{ width: `${skill.proficiency}%` }}
-                      transition={{ duration: 1, delay: 0.2 + (index * 0.02) }}
-                      viewport={{ once: true }}
-                    />
-                  </div>
-                  <div className="w-full flex justify-between mt-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <span className="text-[10px] text-white/40">Proficiency</span>
-                    <span className="text-[10px] font-mono font-medium" style={{ color: categoryColor }}>{skill.proficiency}%</span>
-                  </div>
                 </motion.div>
               );
             })}

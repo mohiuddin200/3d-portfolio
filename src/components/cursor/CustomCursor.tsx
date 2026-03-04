@@ -38,9 +38,10 @@ export function CustomCursor() {
     const animate = () => {
       const { x, y } = mousePos.current;
 
-      // Dot follows instantly
+      // Dot follows instantly — use left/top to avoid transform conflicts
       if (dotRef.current) {
-        dotRef.current.style.transform = `translate(${x - 4}px, ${y - 4}px)`;
+        dotRef.current.style.left = `${x - 4}px`;
+        dotRef.current.style.top = `${y - 4}px`;
       }
 
       // Ring follows with spring lerp
@@ -48,7 +49,8 @@ export function CustomCursor() {
       ringPos.current.y += (y - ringPos.current.y) * 0.15;
 
       if (ringRef.current) {
-        ringRef.current.style.transform = `translate(${ringPos.current.x - 20}px, ${ringPos.current.y - 20}px)`;
+        ringRef.current.style.left = `${ringPos.current.x - 20}px`;
+        ringRef.current.style.top = `${ringPos.current.y - 20}px`;
       }
 
       rafRef.current = requestAnimationFrame(animate);
@@ -71,8 +73,6 @@ export function CustomCursor() {
     switch (variant) {
       case "link":
         return "scale-150 bg-gold/20 border-gold";
-      case "project":
-        return "scale-150 rounded-lg border-gold";
       case "text":
         return "scale-y-100 scale-x-50 rounded-sm border-gold";
       default:
@@ -85,14 +85,12 @@ export function CustomCursor() {
       {/* Inner dot */}
       <div
         ref={dotRef}
-        className="fixed top-0 left-0 z-[9999] h-2 w-2 rounded-full bg-gold opacity-0 pointer-events-none mix-blend-difference"
-        style={{ willChange: "transform" }}
+        className="fixed z-[9999] h-2 w-2 rounded-full bg-gold opacity-0 pointer-events-none mix-blend-difference"
       />
       {/* Outer ring */}
       <div
         ref={ringRef}
-        className={`fixed top-0 left-0 z-[9999] h-10 w-10 rounded-full border-2 opacity-0 pointer-events-none mix-blend-difference transition-all duration-300 ease-out ${ringStyle}`}
-        style={{ willChange: "transform" }}
+        className={`fixed z-[9999] h-10 w-10 rounded-full border-2 opacity-0 pointer-events-none mix-blend-difference transition-[scale,border-color,background-color,border-radius] duration-300 ease-out ${ringStyle}`}
       />
     </>
   );

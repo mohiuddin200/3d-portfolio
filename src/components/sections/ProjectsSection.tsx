@@ -136,7 +136,7 @@ export default function ProjectsSection() {
                   className={`${isEven ? "lg:order-1" : "lg:order-2"}`}
                 >
                   <motion.div
-                    onMouseEnter={() => setVariant("project")}
+                    onMouseEnter={() => setVariant("link")}
                     onMouseLeave={() => setVariant("default")}
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}

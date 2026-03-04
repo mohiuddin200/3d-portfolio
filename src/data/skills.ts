@@ -7,9 +7,9 @@ export const SKILL_CATEGORIES: {
   radius: number;
 }[] = [
   { id: "frontend", label: "Frontend", color: "#FFD700", radius: 3 },
-  { id: "backend", label: "Backend", color: "#FFFFFF", radius: 5 },
-  { id: "tools", label: "Tools & DevOps", color: "#A0A0A0", radius: 7 },
-  { id: "ai", label: "AI & Data", color: "#FFE44D", radius: 9 },
+  { id: "backend", label: "Backend", color: "#FFD700", radius: 5 },
+  { id: "tools", label: "Tools & DevOps", color: "#FFD700", radius: 7 },
+  { id: "ai", label: "AI & Data", color: "#FFD700", radius: 9 },
 ];
 
 export const SKILLS: Skill[] = [

@@ -22,7 +22,6 @@ export default function Home() {
         <SkillsSection />
         <SectionTransition type="gold-wipe" />
         <ExperienceSection />
-        <SectionTransition type="scale-fade" />
         <ProjectsSection />
         <SectionTransition type="parallax-layers" />
         <ContactSection />
