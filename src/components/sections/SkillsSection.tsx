@@ -1,26 +1,29 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
-import { motion } from "motion/react";
+import { useRef, useState, useEffect } from "react";
+import { gsap } from "@/lib/gsap";
+import { motion, AnimatePresence } from "motion/react";
 import { useSectionInView } from "@/hooks/useSectionInView";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { withSceneLoader } from "@/components/three/SceneLoader";
+import * as LucideIcons from "lucide-react";
 import { SKILLS, SKILL_CATEGORIES } from "@/data/skills";
 
-const SkillsOrbitLoader = withSceneLoader(
-  () => import("@/components/three/SkillsOrbit")
-);
+const IconRender = ({ iconName, color, className = "w-6 h-6" }: { iconName?: string; color: string; className?: string }) => {
+  if (!iconName) return null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const IconNames = LucideIcons as unknown as Record<string, React.ComponentType<any>>;
+  const Icon = IconNames[iconName];
+  if (!Icon) return <LucideIcons.CheckCircle className={className} style={{ color }} />;
+  return <Icon className={className} style={{ color }} />;
+};
 
 export default function SkillsSection() {
   const { ref: sectionRef } = useSectionInView(0.2);
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const [activeCategory, setActiveCategory] = useState<string>("all");
 
   // Heading animation
   useEffect(() => {
     if (!headingRef.current) return;
-
     const ctx = gsap.context(() => {
       gsap.fromTo(
         headingRef.current,
@@ -38,154 +41,131 @@ export default function SkillsSection() {
         }
       );
     });
-
     return () => ctx.revert();
   }, []);
 
-  const getCategoryColor = (categoryId: string) => {
-    return (
-      SKILL_CATEGORIES.find((c) => c.id === categoryId)?.color ?? "#FFD700"
-    );
-  };
-
-  const getCategoryLabel = (categoryId: string) => {
-    return SKILL_CATEGORIES.find((c) => c.id === categoryId)?.label ?? categoryId;
-  };
-
-  // Group skills by category
-  const groupedSkills = SKILL_CATEGORIES.map((cat) => ({
-    ...cat,
-    skills: SKILLS.filter((s) => s.category === cat.id),
-  }));
+  const filteredSkills = activeCategory === "all"
+    ? SKILLS
+    : SKILLS.filter(s => s.category === activeCategory);
 
   return (
     <section
       ref={sectionRef}
       id="skills"
-      className="relative min-h-screen bg-black py-32"
+      className="relative min-h-screen bg-black py-32 overflow-hidden"
     >
-      <div className="max-w-7xl mx-auto px-6">
-        {/* Section heading */}
-        <div className="text-center mb-16">
+      {/* Background ambient glow */}
+      <div className="absolute inset-0 bg-linear-to-b from-black via-zinc-900/20 to-black pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gold/5 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <div className="text-center mb-16 relative z-10">
           <h2
             ref={headingRef}
-            className="text-4xl sm:text-5xl font-bold text-white"
+            className="text-4xl sm:text-5xl font-bold text-white mb-4"
             style={{ opacity: 0 }}
           >
-            Skills & Expertise
+            My Tech Stack
             <span className="text-[#FFD700]">.</span>
           </h2>
-          <p className="mt-4 text-white/50 text-lg max-w-2xl mx-auto">
-            Technologies and tools I work with
+          <p className="text-white/50 text-lg max-w-2xl mx-auto">
+            Technologies, frameworks, and tools I use to build robust digital products.
           </p>
         </div>
 
-        {isDesktop ? (
-          /* Desktop: 3D SkillsOrbit + side legend */
-          <div className="grid grid-cols-5 gap-8 items-center min-h-[500px]">
-            {/* Category legend (left) */}
-            <div className="col-span-1 space-y-6">
-              {SKILL_CATEGORIES.map((cat, i) => (
-                <motion.div
-                  key={cat.id}
-                  initial={{ opacity: 0, x: -30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1, duration: 0.5 }}
-                  viewport={{ once: true }}
-                  className="flex items-center gap-3"
-                >
-                  <div
-                    className="w-3 h-3 rounded-full shrink-0"
-                    style={{ backgroundColor: cat.color }}
-                  />
-                  <span className="text-white/70 text-sm font-medium">
-                    {cat.label}
-                  </span>
-                </motion.div>
-              ))}
-            </div>
+        {/* Category Filters */}
+        <div className="flex flex-wrap justify-center gap-3 mb-16 relative z-20">
+          <button
+            onClick={() => setActiveCategory("all")}
+            className={`px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border backdrop-blur-sm ${activeCategory === "all"
+              ? "bg-gold text-black border-gold shadow-[0_0_20px_rgba(255,215,0,0.3)]"
+              : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white"
+              }`}
+          >
+            All Skills
+          </button>
+          {SKILL_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border backdrop-blur-sm ${activeCategory === cat.id
+                ? "bg-white/10 text-white shadow-lg border-white/30"
+                : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10 hover:text-white"
+                }`}
+              style={
+                activeCategory === cat.id
+                  ? { borderColor: cat.color, boxShadow: `0 0 20px ${cat.color}30` }
+                  : {}
+              }
+            >
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: cat.color, boxShadow: `0 0 10px ${cat.color}` }}
+              />
+              {cat.label}
+            </button>
+          ))}
+        </div>
 
-            {/* 3D scene (center) */}
-            <div className="col-span-3 h-[500px]">
-              <SkillsOrbitLoader />
-            </div>
+        {/* Skills Grid */}
+        <motion.div
+          layout
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-6 relative z-10"
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredSkills.map((skill, index) => {
+              const categoryColor = SKILL_CATEGORIES.find(c => c.id === skill.category)?.color || "#FFD700";
 
-            {/* Skill count summary (right) */}
-            <div className="col-span-1 space-y-6">
-              {groupedSkills.map((group, i) => (
+              return (
                 <motion.div
-                  key={group.id}
-                  initial={{ opacity: 0, x: 30 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1, duration: 0.5 }}
-                  viewport={{ once: true }}
-                  className="text-right"
+                  layout
+                  key={skill.name}
+                  initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
+                  animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
+                  transition={{
+                    duration: 0.4,
+                    delay: index * 0.03,
+                    ease: "easeOut"
+                  }}
+                  whileHover={{ y: -8, scale: 1.05, zIndex: 10 }}
+                  className="group relative rounded-2xl border border-white/10 bg-black/40 p-6 backdrop-blur-md overflow-hidden flex flex-col items-center text-center hover:border-white/30 transition-colors duration-500"
                 >
+                  {/* Glowing background on hover */}
                   <div
-                    className="text-2xl font-bold"
-                    style={{ color: group.color }}
-                  >
-                    {group.skills.length}
-                  </div>
-                  <div className="text-white/40 text-xs uppercase tracking-wider">
-                    {group.label}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* Mobile: 2D grid of skill cards */
-          <div className="space-y-12">
-            {groupedSkills.map((group) => (
-              <div key={group.id}>
-                <h3
-                  className="text-lg font-semibold mb-4 flex items-center gap-2"
-                  style={{ color: group.color }}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: group.color }}
+                    className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 rounded-2xl"
+                    style={{ background: `radial-gradient(circle at center, ${categoryColor}, transparent 70%)` }}
                   />
-                  {group.label}
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {group.skills.map((skill, i) => (
+
+                  <div className="relative mb-4 p-4 rounded-xl bg-white/5 border border-white/5 group-hover:scale-110 group-hover:bg-white/10 transition-all duration-500 shadow-inner">
+                    <IconRender iconName={skill.icon} color={categoryColor} className="w-8 h-8 md:w-10 md:h-10 transition-transform duration-500 group-hover:rotate-12" />
+                  </div>
+
+                  <h3 className="text-white font-medium mb-1 z-10">{skill.name}</h3>
+                  <p className="text-white/40 text-xs uppercase tracking-wider mb-4 z-10">
+                    {SKILL_CATEGORIES.find(c => c.id === skill.category)?.label}
+                  </p>
+
+                  {/* Progress bar */}
+                  <div className="w-full h-1.5 rounded-full bg-white/5 overflow-hidden z-10 mt-auto">
                     <motion.div
-                      key={skill.name}
-                      initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                      whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{
-                        delay: i * 0.05,
-                        duration: 0.4,
-                        ease: "easeOut",
-                      }}
-                      viewport={{ once: true, margin: "-50px" }}
-                      className="rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm"
-                    >
-                      <div className="text-white text-sm font-medium mb-2">
-                        {skill.name}
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
-                        <motion.div
-                          className="h-full rounded-full"
-                          style={{ backgroundColor: getCategoryColor(skill.category) }}
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${skill.proficiency}%` }}
-                          transition={{ delay: i * 0.05 + 0.3, duration: 0.8 }}
-                          viewport={{ once: true }}
-                        />
-                      </div>
-                      <div className="mt-1 text-right text-xs text-white/40">
-                        {skill.proficiency}%
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: categoryColor, boxShadow: `0 0 10px ${categoryColor}` }}
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${skill.proficiency}%` }}
+                      transition={{ duration: 1, delay: 0.2 + (index * 0.02) }}
+                      viewport={{ once: true }}
+                    />
+                  </div>
+                  <div className="w-full flex justify-between mt-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="text-[10px] text-white/40">Proficiency</span>
+                    <span className="text-[10px] font-mono font-medium" style={{ color: categoryColor }}>{skill.proficiency}%</span>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </motion.div>
       </div>
     </section>
   );

@@ -5,7 +5,6 @@ import AboutSection from "@/components/sections/AboutSection";
 import SkillsSection from "@/components/sections/SkillsSection";
 import ExperienceSection from "@/components/sections/ExperienceSection";
 import ProjectsSection from "@/components/sections/ProjectsSection";
-import CertificationsSection from "@/components/sections/CertificationsSection";
 import ContactSection from "@/components/sections/ContactSection";
 import { SectionTransition } from "@/components/transitions/SectionTransition";
 import { Footer } from "@/components/layout/Footer";
@@ -25,7 +24,6 @@ export default function Home() {
         <ExperienceSection />
         <SectionTransition type="scale-fade" />
         <ProjectsSection />
-        <CertificationsSection />
         <SectionTransition type="parallax-layers" />
         <ContactSection />
       </main>
