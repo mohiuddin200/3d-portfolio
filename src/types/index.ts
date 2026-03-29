@@ -22,6 +22,11 @@ export interface Skill {
 
 export type SkillCategory = "frontend" | "backend" | "tools" | "ai";
 
+export interface ExperienceRole {
+  title: string;
+  period: string;
+}
+
 export interface Experience {
   id: string;
   type: "work" | "education";
@@ -31,6 +36,7 @@ export interface Experience {
   location: string;
   startDate: string;
   endDate: string | "Present";
+  roles?: ExperienceRole[];
   description: string[];
   techStack: string[];
 }

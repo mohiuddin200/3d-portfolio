@@ -175,6 +175,32 @@ export default function ExperienceSection() {
                     </div>
                   </div>
 
+                  {/* Role progression timeline */}
+                  {activeExp.roles && activeExp.roles.length > 0 && (
+                    <div className="mb-10 flex flex-col gap-3 relative pl-5">
+                      {/* Line connecting dots - spans only between first and last dot centers */}
+                      <div className="absolute left-0 top-[6px] bottom-[6px] w-[2px] bg-gold/30" />
+                      {activeExp.roles.map((role, idx) => (
+                        <div key={idx} className="relative flex items-center gap-4">
+                          <div className={`absolute -left-[25px] w-3 h-3 rounded-full border-2 ${idx === 0 ? "bg-gold border-gold shadow-[0_0_10px_rgba(255,215,0,0.6)]" : "bg-white/10 border-white/30"}`} />
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            <span className={`font-semibold text-base ${idx === 0 ? "text-gold" : "text-white/50"}`}>
+                              {role.title}
+                            </span>
+                            <span className={`text-sm tracking-wide ${idx === 0 ? "text-white/60" : "text-white/30"}`}>
+                              {role.period}
+                            </span>
+                            {idx === 0 && (
+                              <span className="text-[11px] font-bold tracking-widest uppercase bg-gold/15 text-gold px-2.5 py-0.5 rounded-full border border-gold/30">
+                                Promoted
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <ul className="space-y-6 mb-12">
                     {activeExp.description.map((item, idx) => (
                       <li key={idx} className="flex items-start text-gray-300 text-lg leading-relaxed group/item">
