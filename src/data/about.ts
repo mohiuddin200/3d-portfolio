@@ -3,7 +3,7 @@ export const ABOUT = {
   bio: [
     "I'm a Full Stack Developer from Dhaka, Bangladesh, specializing in building modern web applications with Next.js, TypeScript, and AI integration.",
     "I craft scalable, high-performance solutions — from pixel-perfect frontends to robust backend architectures — with a focus on clean code and exceptional user experiences.",
-    "Currently building AI-powered applications at an AI company in Bangkok, where I integrate conversational AI, workflow automation, and intelligent features into production systems.",
+    "Currently building sovereign AI-powered applications at KI Quadrat in Austria, where I integrate conversational AI, workflow automation, and intelligent features into production systems for municipalities.",
   ],
   stats: [
     { label: "Years Experience", value: 2, suffix: "+" },
@@ -33,6 +33,10 @@ export const ABOUT = {
     "DevOps",
     "System Design",
   ],
-  photo: "/images/about/profile.jpg",
+  photos: [
+    { src: "/profile.jpg", label: "Mohiuddin" },
+    { src: "/profile.jpg", label: "At Work" },
+    { src: "/profile.jpg", label: "Creative Side" },
+  ],
   photoAlt: "Md Mohiuddin — Full Stack Developer",
 } as const;

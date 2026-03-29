@@ -6,6 +6,13 @@ import { useSectionInView } from "@/hooks/useSectionInView";
 import { useCursor } from "@/components/providers/CursorProvider";
 import { Badge } from "@/components/ui/badge";
 import { ABOUT } from "@/data/about";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  AnimatePresence,
+  type PanInfo,
+} from "motion/react";
 
 /* ------------------------------------------------------------------ */
 /* Animated Counter                                                    */
@@ -42,6 +49,162 @@ function AnimatedCounter({
       {count}
       {suffix}
     </span>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Tinder-Style Swipeable Photo Stack                                  */
+/* ------------------------------------------------------------------ */
+function SwipePhotoStack({ photos }: { photos: readonly { src: string; label: string }[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [exitX, setExitX] = useState(0);
+
+  const activeIndex = currentIndex % photos.length;
+
+  const handleSwipe = useCallback(
+    (direction: number) => {
+      setExitX(direction > 0 ? 300 : -300);
+      setCurrentIndex((prev) => prev + 1);
+    },
+    []
+  );
+
+  // Indices for stacked cards behind the top one
+  const nextIndex = (currentIndex + 1) % photos.length;
+  const thirdIndex = (currentIndex + 2) % photos.length;
+
+  return (
+    <div className="relative w-72 h-96 sm:w-80 sm:h-[28rem]">
+      {/* Dots indicator */}
+      <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 flex gap-2.5 z-10">
+        {photos.map((_, i) => (
+          <div
+            key={i}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              activeIndex === i
+                ? "bg-[#FFD700] scale-125 shadow-[0_0_8px_rgba(255,215,0,0.6)]"
+                : "bg-white/20"
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* Background card (3rd) — fanned out right */}
+      {photos.length > 2 && (
+        <motion.div
+          className="absolute inset-0 rounded-2xl bg-[#0a0a0a] border border-white/10 overflow-hidden shadow-xl"
+          animate={{ rotate: 6, scale: 0.92, x: 16, y: 4 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          style={{ zIndex: 1, transformOrigin: "bottom center" }}
+        >
+          <img
+            src={photos[thirdIndex].src}
+            alt={photos[thirdIndex].label}
+            className="w-full h-full object-cover opacity-40"
+            draggable={false}
+          />
+          <div className="absolute inset-0 bg-black/30" />
+        </motion.div>
+      )}
+
+      {/* Middle card (2nd) — fanned out slightly */}
+      {photos.length > 1 && (
+        <motion.div
+          className="absolute inset-0 rounded-2xl bg-[#0a0a0a] border border-white/15 overflow-hidden shadow-xl"
+          animate={{ rotate: -4, scale: 0.96, x: -10, y: 2 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          style={{ zIndex: 2, transformOrigin: "bottom center" }}
+        >
+          <img
+            src={photos[nextIndex].src}
+            alt={photos[nextIndex].label}
+            className="w-full h-full object-cover opacity-60"
+            draggable={false}
+          />
+          <div className="absolute inset-0 bg-black/20" />
+        </motion.div>
+      )}
+
+      {/* Top card — draggable */}
+      <AnimatePresence mode="popLayout">
+        <SwipeCard
+          key={currentIndex}
+          card={photos[activeIndex]}
+          exitX={exitX}
+          onSwipe={handleSwipe}
+        />
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function SwipeCard({
+  card,
+  exitX,
+  onSwipe,
+}: {
+  card: { src: string; label: string };
+  exitX: number;
+  onSwipe: (direction: number) => void;
+}) {
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-15, 15]);
+  const cardOpacity = useTransform(x, [-200, -150, 0, 150, 200], [0.6, 1, 1, 1, 0.6]);
+
+  const handleDragEnd = (_: unknown, info: PanInfo) => {
+    const threshold = 80;
+    const velocityThreshold = 400;
+
+    if (
+      Math.abs(info.offset.x) > threshold ||
+      Math.abs(info.velocity.x) > velocityThreshold
+    ) {
+      onSwipe(info.offset.x > 0 ? 1 : -1);
+    }
+  };
+
+  return (
+    <motion.div
+      className="absolute inset-0 rounded-2xl border-2 border-[#FFD700]/80 bg-[#0a0a0a] overflow-hidden cursor-grab active:cursor-grabbing select-none"
+      style={{
+        x,
+        rotate,
+        opacity: cardOpacity,
+        zIndex: 10,
+      }}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.7}
+      onDragEnd={handleDragEnd}
+      initial={{ scale: 0.95, opacity: 0, y: 10 }}
+      animate={{ scale: 1, opacity: 1, y: 0 }}
+      exit={{
+        x: exitX,
+        opacity: 0,
+        rotate: exitX > 0 ? 15 : -15,
+        transition: { duration: 0.35, ease: "easeIn" },
+      }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      whileDrag={{ scale: 1.02 }}
+    >
+      <img
+        src={card.src}
+        alt={card.label}
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+        draggable={false}
+      />
+      {/* Gradient overlays */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/70 pointer-events-none" />
+
+      {/* Label */}
+      <div className="absolute bottom-5 left-5 right-5 pointer-events-none">
+        <p className="text-white font-semibold text-lg drop-shadow-lg">{card.label}</p>
+      </div>
+
+      {/* Corner accents */}
+      <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-[#FFD700]/40 pointer-events-none" />
+      <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-[#FFD700]/40 pointer-events-none" />
+    </motion.div>
   );
 }
 
@@ -195,27 +358,10 @@ export default function AboutSection() {
       <div className="max-w-7xl mx-auto px-6">
         {/* ====== Top: Photo + Bio (balanced 2-col) ====== */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          {/* Photo — kept as-is */}
+          {/* Swipeable Photo Stack */}
           <div className="flex justify-center lg:justify-end">
-            <div
-              ref={photoRef}
-              className="relative w-72 h-96 sm:w-80 sm:h-[28rem] rounded-2xl border-2 border-[#FFD700] bg-white/5 overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/10 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-20 h-20 rounded-full border-2 border-[#FFD700]/40 mx-auto mb-4 flex items-center justify-center">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                  </div>
-                  <p className="text-white/30 text-sm">Photo</p>
-                </div>
-              </div>
-              <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-[#FFD700]/50" />
-              <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-[#FFD700]/50" />
+            <div ref={photoRef} className="pb-10">
+              <SwipePhotoStack photos={ABOUT.photos} />
             </div>
           </div>
 
