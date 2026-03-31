@@ -156,10 +156,8 @@ export function Navigation() {
             side="right"
             className="bg-black/95 backdrop-blur-xl border-white/10 w-72"
           >
-            <SheetTitle className="text-white text-lg px-2">
-              Navigation
-            </SheetTitle>
-            <nav className="flex flex-col gap-2 mt-4 px-2" aria-label="Mobile navigation">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <nav className="flex flex-col gap-2 mt-2 px-2" aria-label="Mobile navigation">
               {NAV_ITEMS.map((item) => {
                 const sectionId = item.href.replace("#", "");
                 const isActive = activeSection === sectionId;
