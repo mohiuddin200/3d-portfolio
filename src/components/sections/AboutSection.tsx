@@ -201,19 +201,13 @@ export default function AboutSection() {
               ref={photoRef}
               className="relative w-72 h-96 sm:w-80 sm:h-[28rem] rounded-2xl border-2 border-[#FFD700] bg-white/5 overflow-hidden"
             >
+              <img
+                src="/profile.jpg"
+                alt="Md Mohiuddin — Full Stack Developer"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/10 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="w-20 h-20 rounded-full border-2 border-[#FFD700]/40 mx-auto mb-4 flex items-center justify-center">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                      <circle cx="12" cy="7" r="4" />
-                    </svg>
-                  </div>
-                  <p className="text-white/30 text-sm">Photo</p>
-                </div>
-              </div>
               <div className="absolute top-3 left-3 w-6 h-6 border-l-2 border-t-2 border-[#FFD700]/50" />
               <div className="absolute bottom-3 right-3 w-6 h-6 border-r-2 border-b-2 border-[#FFD700]/50" />
             </div>
