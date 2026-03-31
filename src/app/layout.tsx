@@ -40,6 +40,10 @@ export const metadata: Metadata = {
     images: [SITE.ogImage],
   },
   robots: { index: true, follow: true },
+  other: {
+    "theme-color": "#000000",
+    "msapplication-TileColor": "#000000",
+  },
 };
 
 export default function RootLayout({
