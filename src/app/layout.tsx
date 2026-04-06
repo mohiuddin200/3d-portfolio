@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AnimationProvider } from "@/components/providers/AnimationProvider";
 import { CursorProvider } from "@/components/providers/CursorProvider";
 import { SmoothScrollProvider } from "@/components/providers/SmoothScrollProvider";
+import { LoadingProvider } from "@/components/providers/LoadingProvider";
+import { LoadingScreen } from "@/components/loading/LoadingScreen";
 import { CustomCursor } from "@/components/cursor/CustomCursor";
 import { BackgroundMesh } from "@/components/layout/BackgroundMesh";
 import { SITE } from "@/lib/constants";
@@ -59,15 +61,18 @@ export default function RootLayout({
         <a href="#main-content" className="skip-to-content">
           Skip to content
         </a>
-        <AnimationProvider>
-          <CursorProvider>
-            <SmoothScrollProvider>
-              <CustomCursor />
-              <BackgroundMesh />
-              {children}
-            </SmoothScrollProvider>
-          </CursorProvider>
-        </AnimationProvider>
+        <LoadingProvider>
+          <LoadingScreen />
+          <AnimationProvider>
+            <CursorProvider>
+              <SmoothScrollProvider>
+                <CustomCursor />
+                <BackgroundMesh />
+                {children}
+              </SmoothScrollProvider>
+            </CursorProvider>
+          </AnimationProvider>
+        </LoadingProvider>
       </body>
     </html>
   );

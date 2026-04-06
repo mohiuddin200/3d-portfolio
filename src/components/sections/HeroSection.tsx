@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { withSceneLoader } from "@/components/three/SceneLoader";
 import { useMousePosition } from "@/hooks/useMousePosition";
 import { useAnimation } from "@/components/providers/AnimationProvider";
+import { useLoading } from "@/components/providers/LoadingProvider";
 import { HERO_TITLES, HERO_SUBTITLE } from "@/data/hero";
 
 const HeroSceneLoader = withSceneLoader(
@@ -19,6 +20,7 @@ export default function HeroSection() {
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
   const mouse = useMousePosition();
   const { reducedMotion } = useAnimation();
+  const { isLoaded } = useLoading();
 
   const [titleIndex, setTitleIndex] = useState(0);
 
@@ -32,7 +34,7 @@ export default function HeroSection() {
 
   // Character-by-character stagger animation for name
   useEffect(() => {
-    if (!nameRef.current) return;
+    if (!nameRef.current || !isLoaded) return;
 
     const chars = nameRef.current.querySelectorAll(".name-char");
 
@@ -47,17 +49,17 @@ export default function HeroSection() {
           stagger: 0.04,
           duration: 0.8,
           ease: "back.out(1.7)",
-          delay: 0.3,
+          delay: 0.1,
         }
       );
     });
 
     return () => ctx.revert();
-  }, []);
+  }, [isLoaded]);
 
   // Subtitle fade in after name
   useEffect(() => {
-    if (!subtitleRef.current) return;
+    if (!subtitleRef.current || !isLoaded) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -68,23 +70,23 @@ export default function HeroSection() {
           y: 0,
           duration: 1,
           ease: "power2.out",
-          delay: 1.2,
+          delay: 0.9,
         }
       );
     });
 
     return () => ctx.revert();
-  }, []);
+  }, [isLoaded]);
 
   // Scroll indicator bounce animation
   useEffect(() => {
-    if (!scrollIndicatorRef.current) return;
+    if (!scrollIndicatorRef.current || !isLoaded) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
         scrollIndicatorRef.current,
         { opacity: 0 },
-        { opacity: 1, duration: 1, delay: 2 }
+        { opacity: 1, duration: 1, delay: 1.7 }
       );
       gsap.to(scrollIndicatorRef.current, {
         y: 12,
@@ -92,12 +94,12 @@ export default function HeroSection() {
         ease: "power1.inOut",
         yoyo: true,
         repeat: -1,
-        delay: 2,
+        delay: 1.7,
       });
     });
 
     return () => ctx.revert();
-  }, []);
+  }, [isLoaded]);
 
   // ScrollTrigger: fade out section as user scrolls down
   useEffect(() => {
@@ -142,8 +144,8 @@ export default function HeroSection() {
           {/* Greeting */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
             className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FFD700]/20 bg-[#FFD700]/5 px-4 py-1.5 backdrop-blur-md shadow-[0_0_15px_rgba(255,215,0,0.1)]"
           >
             <span className="h-2 w-2 rounded-full bg-[#FFD700] animate-pulse"></span>
@@ -207,8 +209,8 @@ export default function HeroSection() {
           {/* CTA Buttons */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.8, duration: 0.8, ease: "easeOut" }}
+            animate={isLoaded ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ delay: isLoaded ? 1.5 : 0, duration: 0.8, ease: "easeOut" }}
             className="mt-10 flex flex-col sm:flex-row gap-4"
           >
             <a
