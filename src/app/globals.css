@@ -110,6 +110,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body {
+    overflow-x: hidden;
+  }
   body {
     @apply bg-bg-primary text-text-primary;
     cursor: none;
