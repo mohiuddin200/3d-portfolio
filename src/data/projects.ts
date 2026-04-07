@@ -27,6 +27,50 @@ export const PROJECTS: Project[] = [
     featured: true,
     year: 2025,
   },
+  {
+    slug: "cashflow",
+    title: "CashFlow",
+    shortDescription:
+      "Offline-first personal finance PWA with AI-powered insights, loan tracking, and multi-currency support",
+    description:
+      "A Progressive Web App for personal financial management built with a mobile-first, offline-first architecture. CashFlow helps users track income and expenses across 20+ currencies, manage loans given and received, set monthly spending goals with daily budget recommendations, and get AI-powered financial advice via Google Gemini. Features real-time Firestore sync with IndexedDB offline fallback, automatic conflict resolution, push notifications for loan reminders, and a comprehensive dashboard with spending analytics. Supports Google OAuth and email/password authentication with per-user data isolation.",
+    coverImage: "/images/projects/cashflow-cover.jpg",
+    screenshots: [],
+    techStack: [
+      "React",
+      "TypeScript",
+      "Firebase",
+      "Tailwind CSS",
+      "Google Gemini API",
+      "IndexedDB",
+      "PWA",
+    ],
+    githubUrl: "https://github.com/mohiuddin200/cashFlow",
+    featured: true,
+    year: 2025,
+  },
+  {
+    slug: "hangoutpay",
+    title: "HangoutPay",
+    shortDescription:
+      "Real-time group expense tracker and splitter with optimized settlement algorithms",
+    description:
+      "A real-time group expense splitting app designed for friends and travel groups. HangoutPay lets users create trips, add shared expenses with flexible payer and participant selection, and automatically calculates who owes whom. Features an optimized settlement algorithm that minimizes the number of transactions needed to settle all debts. Built on Convex for real-time data synchronization, with Google OAuth authentication, ghost user support for non-registered participants, and a full audit trail. Installable as a PWA with offline fallback support.",
+    coverImage: "/images/projects/hangoutpay-cover.jpg",
+    screenshots: [],
+    techStack: [
+      "React",
+      "TypeScript",
+      "Convex",
+      "Tailwind CSS",
+      "Radix UI",
+      "React Router",
+      "PWA",
+    ],
+    githubUrl: "https://github.com/mohiuddin200/HangoutPay",
+    featured: true,
+    year: 2025,
+  },
 ];
 
 export function getProjectBySlug(slug: string): Project | undefined {
