@@ -3,7 +3,7 @@ export const ABOUT = {
   bio: [
     "I'm a Full Stack Developer from Dhaka, Bangladesh, specializing in building modern web applications with Next.js, TypeScript, and AI integration.",
     "I craft scalable, high-performance solutions — from pixel-perfect frontends to robust backend architectures — with a focus on clean code and exceptional user experiences.",
-    "Currently building AI-powered applications at an AI company in Bangkok, where I integrate conversational AI, workflow automation, and intelligent features into production systems.",
+    "Currently building AI-powered applications at KI-Quadrat, a Vienna-based AI company, where I integrate conversational AI, workflow automation, and intelligent features into production systems.",
   ],
   stats: [
     { label: "Years Experience", value: 2, suffix: "+" },
