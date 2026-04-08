@@ -204,7 +204,7 @@ export default function ContactSection() {
                 asChild
                 className="bg-[#FFD700] text-black hover:bg-[#FFD700]/90 font-semibold w-full sm:w-auto"
               >
-                <a href={CONTACT.resumeUrl} download>
+                <a href={CONTACT.resumeUrl} target="_blank" rel="noopener noreferrer">
                   Download Resume
                   <svg
                     width="16"

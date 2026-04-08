@@ -33,5 +33,5 @@ export const SOCIAL_LINKS: SocialLink[] = [
 
 export const CONTACT = {
   email: "mohiuddin.200@outlook.com",
-  resumeUrl: "/Mohiuddin_Full-Stack-Developer_2025.pdf",
+  resumeUrl: "https://drive.google.com/file/d/163gBBaat3VjuNW-PtQZXWT0zqmtboODs/view?usp=drive_link",
 } as const;
