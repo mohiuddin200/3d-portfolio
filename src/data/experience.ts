@@ -4,13 +4,14 @@ export const EXPERIENCES: Experience[] = [
   {
     id: "exp-1",
     type: "work",
-    title: "Next JS Specialist",
+    title: "Full-Stack Developer",
     organization: "KI-Quadrat Systemhaus GmbH",
     location: "Vienna, Austria (Remote)",
     startDate: "Nov 2024",
     endDate: "Present",
     roles: [
-      { title: "Next JS Specialist", period: "Nov 2024 — Present" },
+      { title: "Full-Stack Developer", period: "Jan 2026 — Present" },
+      { title: "Next JS Specialist", period: "Nov 2024 — Dec 2025" },
     ],
     description: [
       "Designed a multi-tenant Convex real-time database schema powering role-based access control across municipalities, departments, and teams for a German government SaaS platform.",
