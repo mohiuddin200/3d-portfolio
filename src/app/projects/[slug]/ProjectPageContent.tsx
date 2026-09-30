@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogTrigger,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { useCursor } from "@/components/providers/CursorProvider";
 import type { Project } from "@/types";
@@ -24,6 +24,12 @@ export default function ProjectPageContent({ project }: Props) {
   const heroRef = useRef<HTMLDivElement>(null);
   const { setVariant } = useCursor();
   const [videoLoaded, setVideoLoaded] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const total = project.screenshots.length;
+  const showNext = () =>
+    setActiveIndex((i) => (i === null ? null : (i + 1) % total));
+  const showPrev = () =>
+    setActiveIndex((i) => (i === null ? null : (i - 1 + total) % total));
 
   const currentIndex = PROJECTS.findIndex((p) => p.slug === project.slug);
   const prevProject = currentIndex > 0 ? PROJECTS[currentIndex - 1] : null;
@@ -61,13 +67,16 @@ export default function ProjectPageContent({ project }: Props) {
       {/* Hero Banner */}
       <div ref={heroRef} className="relative h-[60vh] overflow-hidden">
         <div className="project-hero-image absolute inset-0 scale-110">
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-bg-primary" />
+          <Image
+            src={project.coverImage}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-top opacity-50"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-bg-primary" />
           <div className="absolute inset-0 bg-gold/5" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-9xl font-bold text-white/5">
-              {project.title[0]}
-            </span>
-          </div>
         </div>
         <div className="absolute inset-0 flex items-end">
           <div className="mx-auto w-full max-w-7xl px-6 pb-12">
@@ -204,32 +213,115 @@ export default function ProjectPageContent({ project }: Props) {
             </h2>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {project.screenshots.map((src, i) => (
-                <Dialog key={i}>
-                  <DialogTrigger asChild>
-                    <motion.div
-                      className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-bg-card"
-                      whileHover={{ scale: 1.02 }}
-                      onMouseEnter={() => setVariant("link")}
-                      onMouseLeave={() => setVariant("default")}
-                    >
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-4xl text-white/10">
-                          {i + 1}
-                        </span>
-                      </div>
-                      <div className="absolute inset-0 bg-gold/0 transition-colors group-hover:bg-gold/5" />
-                    </motion.div>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl border-white/10 bg-bg-secondary">
-                    <div className="aspect-video w-full rounded bg-bg-card flex items-center justify-center">
-                      <span className="text-text-secondary">
-                        Screenshot {i + 1}
-                      </span>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <motion.button
+                  key={src}
+                  type="button"
+                  aria-label={`Open ${project.title} screenshot ${i + 1} of ${total}`}
+                  className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-bg-card text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
+                  whileHover={{ scale: 1.02 }}
+                  onMouseEnter={() => setVariant("link")}
+                  onMouseLeave={() => setVariant("default")}
+                  onClick={() => setActiveIndex(i)}
+                >
+                  <Image
+                    src={src}
+                    alt={`${project.title} screenshot ${i + 1}`}
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover object-left-top transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gold/0 transition-colors group-hover:bg-gold/5" />
+                </motion.button>
               ))}
             </div>
+
+            {/* Lightbox */}
+            <Dialog
+              open={activeIndex !== null}
+              onOpenChange={(open) => {
+                if (!open) setActiveIndex(null);
+              }}
+            >
+              <DialogContent
+                className="w-[calc(100vw-1.5rem)] max-w-[calc(100vw-1.5rem)] sm:max-w-[min(calc(100vw-4rem),1800px)] gap-0 border-white/10 bg-bg-secondary p-2 sm:p-3 [&>button]:top-3 [&>button]:right-3 [&>button]:rounded-full [&>button]:bg-black/70 [&>button]:p-1.5 [&>button]:text-white [&>button]:opacity-100 [&>button]:hover:bg-gold [&>button]:hover:text-black"
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowRight") {
+                    e.preventDefault();
+                    showNext();
+                  } else if (e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    showPrev();
+                  }
+                }}
+              >
+                <DialogTitle className="sr-only">
+                  {project.title} screenshot {(activeIndex ?? 0) + 1} of {total}
+                </DialogTitle>
+                <div className="relative mx-auto aspect-[16/10] w-full max-h-[calc(100vh-4rem)] overflow-hidden rounded-md bg-bg-card">
+                  {activeIndex !== null && (
+                    <Image
+                      key={project.screenshots[activeIndex]}
+                      src={project.screenshots[activeIndex]}
+                      alt={`${project.title} screenshot ${activeIndex + 1}`}
+                      fill
+                      priority
+                      sizes="(min-width: 1864px) 1800px, calc(100vw - 4rem)"
+                      className="object-contain"
+                    />
+                  )}
+
+                  {total > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        aria-label="Previous screenshot"
+                        onClick={showPrev}
+                        onMouseEnter={() => setVariant("link")}
+                        onMouseLeave={() => setVariant("default")}
+                        className="absolute left-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur-sm transition-colors hover:bg-gold hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold sm:left-4 sm:size-12"
+                      >
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Next screenshot"
+                        onClick={showNext}
+                        onMouseEnter={() => setVariant("link")}
+                        onMouseLeave={() => setVariant("default")}
+                        className="absolute right-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur-sm transition-colors hover:bg-gold hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold sm:right-4 sm:size-12"
+                      >
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M9 18l6-6-6-6" />
+                        </svg>
+                      </button>
+                      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 font-mono text-xs text-gold backdrop-blur-sm">
+                        {(activeIndex ?? 0) + 1} / {total}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
           </motion.div>
         )}
 

@@ -38,6 +38,7 @@ type IconProps = { className?: string; style?: React.CSSProperties };
 const SKILL_ICON_MAP: Record<string, ComponentType<IconProps>> = {
   "React JS": SiReact,
   "Next JS": SiNextdotjs,
+  "React Native": SiReact,
   "TypeScript": SiTypescript,
   "Tailwind CSS": SiTailwindcss,
   "Shadcn UI": SiShadcnui,

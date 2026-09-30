@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { motion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSectionInView } from "@/hooks/useSectionInView";
 import { useCursor } from "@/components/providers/CursorProvider";
@@ -148,31 +149,16 @@ export default function ProjectsSection() {
                       className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-white/5 border border-white/10"
                       style={{ clipPath: "inset(0 100% 0 0)" }}
                     >
-                      {/* Project image placeholder */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/10 via-transparent to-white/5" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="w-16 h-16 rounded-xl border border-[#FFD700]/30 mx-auto mb-3 flex items-center justify-center">
-                            <svg
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="#FFD700"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <rect x="3" y="3" width="18" height="18" rx="2" />
-                              <circle cx="8.5" cy="8.5" r="1.5" />
-                              <polyline points="21 15 16 10 5 21" />
-                            </svg>
-                          </div>
-                          <span className="text-white/30 text-sm">
-                            {project.title}
-                          </span>
-                        </div>
-                      </div>
+                      {/* Project cover image */}
+                      <Image
+                        src={project.coverImage}
+                        alt={`${project.title} — ${project.shortDescription}`}
+                        fill
+                        sizes="(min-width: 1024px) 50vw, 100vw"
+                        className="object-cover object-left-top"
+                        priority={i === 0}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                       {/* Year badge */}
                       <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-sm rounded-full px-3 py-1 text-xs text-[#FFD700] font-mono">
                         {project.year}

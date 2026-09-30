@@ -17,6 +17,12 @@ export const SKILLS: Skill[] = [
   { name: "React JS", category: "frontend", proficiency: 95, icon: "Atom" },
   { name: "Next JS", category: "frontend", proficiency: 92, icon: "Triangle" },
   {
+    name: "React Native",
+    category: "frontend",
+    proficiency: 80,
+    icon: "Smartphone",
+  },
+  {
     name: "TypeScript",
     category: "frontend",
     proficiency: 90,
