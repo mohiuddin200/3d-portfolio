@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, AdaptiveDpr, AdaptiveEvents } from "@react-three/drei";
 import * as THREE from "three";
@@ -18,12 +18,23 @@ const MOUSE_CONNECTION_THRESHOLD = 1.5;
 const MAX_CONNECTIONS = 1500;
 const SPREAD_RADIUS = 5.5; // how far particles spread (fills screen)
 const CENTER_DEAD_ZONE = 1.8; // no particles within this radius (keeps text clear)
+const DRIFT = 0.15;
+// Drift never moves a node more than DRIFT * 1.5 from its base position.
+const WORLD_BOUND = SPREAD_RADIUS + DRIFT * 1.5 + 0.1;
 const GOLD = "#FFD700";
 const GOLD_VEC = new THREE.Color(GOLD);
 
-// Shape type counts (~225 each)
-const SHAPES_PER_TYPE = Math.floor(NODE_COUNT / 4);
 const SHAPE_TYPES = 4;
+// Node i is drawn with shape i % SHAPE_TYPES as instance floor(i / SHAPE_TYPES).
+const INSTANCE_COUNTS = Array.from({ length: SHAPE_TYPES }, (_, s) =>
+  Math.floor((NODE_COUNT - s + SHAPE_TYPES - 1) / SHAPE_TYPES)
+);
+
+/** Normalised pointer position (-1..1). Mutated in place, never re-rendered. */
+export interface ScenePointer {
+  x: number;
+  y: number;
+}
 
 // ---------------------------------------------------------------------------
 // Shape geometries (created once, reused)
@@ -54,7 +65,9 @@ function createDiamondGeometry(): THREE.BufferGeometry {
 }
 
 // ---------------------------------------------------------------------------
-// Data pulse type
+// Per-frame state. Created lazily on the first frame (it needs Math.random,
+// which must not run during render) and mutated in place afterwards so the
+// animation loop never allocates.
 // ---------------------------------------------------------------------------
 
 interface DataPulse {
@@ -64,116 +77,117 @@ interface DataPulse {
   maxRadius: number;
 }
 
+interface SceneState {
+  time: number;
+  basePositions: Float32Array;
+  positions: Float32Array;
+  seeds: Float32Array;
+  pulsePhases: Float32Array;
+  pulseRates: Float32Array;
+  pulseBoost: Float32Array;
+  hash: SpatialHash;
+  neighbors: Int32Array;
+  pulses: DataPulse[];
+  nextPulseTime: number;
+  // scratch objects
+  matrix: THREE.Matrix4;
+  pos: THREE.Vector3;
+  scale: THREE.Vector3;
+  quat: THREE.Quaternion;
+  mouseWorld: THREE.Vector3;
+  dir: THREE.Vector3;
+}
+
+function createSceneState(): SceneState {
+  const basePositions = new Float32Array(NODE_COUNT * 3);
+  const seeds = new Float32Array(NODE_COUNT * 3);
+  const pulsePhases = new Float32Array(NODE_COUNT);
+  const pulseRates = new Float32Array(NODE_COUNT);
+
+  for (let i = 0; i < NODE_COUNT; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    // Distribute between dead zone and spread radius (ring/shell, not center)
+    const r =
+      CENTER_DEAD_ZONE +
+      Math.cbrt(Math.random()) * (SPREAD_RADIUS - CENTER_DEAD_ZONE);
+
+    basePositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    basePositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    basePositions[i * 3 + 2] = r * Math.cos(phi);
+
+    seeds[i * 3] = Math.random() * 100;
+    seeds[i * 3 + 1] = Math.random() * 100;
+    seeds[i * 3 + 2] = Math.random() * 100;
+
+    pulsePhases[i] = Math.random() * Math.PI * 2;
+    pulseRates[i] = 0.5 + Math.random() * 1.5;
+  }
+
+  return {
+    time: 0,
+    basePositions,
+    positions: new Float32Array(basePositions),
+    seeds,
+    pulsePhases,
+    pulseRates,
+    pulseBoost: new Float32Array(NODE_COUNT),
+    hash: new SpatialHash(CONNECTION_THRESHOLD, -WORLD_BOUND, WORLD_BOUND, NODE_COUNT),
+    neighbors: new Int32Array(NODE_COUNT),
+    pulses: [],
+    nextPulseTime: 3 + Math.random() * 2,
+    matrix: new THREE.Matrix4(),
+    pos: new THREE.Vector3(),
+    scale: new THREE.Vector3(),
+    quat: new THREE.Quaternion(),
+    mouseWorld: new THREE.Vector3(),
+    dir: new THREE.Vector3(),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Neural Network (rendered inside the Canvas)
 // ---------------------------------------------------------------------------
 
 interface NeuralNetworkProps {
-  mouseX: number;
-  mouseY: number;
+  pointer: RefObject<ScenePointer>;
   reducedMotion: boolean;
 }
 
-function NeuralNetwork({ mouseX, mouseY, reducedMotion }: NeuralNetworkProps) {
+function NeuralNetwork({ pointer, reducedMotion }: NeuralNetworkProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const lineSegRef = useRef<THREE.LineSegments>(null);
+  const instancedRefs = useRef<(THREE.InstancedMesh | null)[]>(
+    Array.from({ length: SHAPE_TYPES }, () => null)
+  );
+  const stateRef = useRef<SceneState | null>(null);
   const { camera } = useThree();
 
-  // --- Stable data (computed once) ---
-  const stableData = useMemo(() => {
-    const basePositions = new Float32Array(NODE_COUNT * 3);
-    const seeds = new Float32Array(NODE_COUNT * 3);
-    const shapeAssignments = new Uint8Array(NODE_COUNT);
-    const pulsePhases = new Float32Array(NODE_COUNT);
-    const pulseRates = new Float32Array(NODE_COUNT);
-
-    for (let i = 0; i < NODE_COUNT; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      // Distribute between dead zone and spread radius (ring/shell, not center)
-      const r =
-        CENTER_DEAD_ZONE +
-        Math.cbrt(Math.random()) * (SPREAD_RADIUS - CENTER_DEAD_ZONE);
-
-      basePositions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      basePositions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      basePositions[i * 3 + 2] = r * Math.cos(phi);
-
-      seeds[i * 3] = Math.random() * 100;
-      seeds[i * 3 + 1] = Math.random() * 100;
-      seeds[i * 3 + 2] = Math.random() * 100;
-
-      shapeAssignments[i] = i % SHAPE_TYPES;
-      pulsePhases[i] = Math.random() * Math.PI * 2;
-      pulseRates[i] = 0.5 + Math.random() * 1.5;
-    }
-
-    return { basePositions, seeds, shapeAssignments, pulsePhases, pulseRates };
-  }, []);
-
-  // Current positions (mutated each frame)
-  const positions = useMemo(
-    () => new Float32Array(stableData.basePositions),
-    [stableData]
-  );
-
-  // Spatial hash for neighbor lookups
-  const spatialHash = useMemo(() => new SpatialHash(CONNECTION_THRESHOLD), []);
-
-  // Per-node scale boost from data pulses (decays each frame)
-  const pulseBoost = useMemo(() => new Float32Array(NODE_COUNT), []);
-
-  // Data pulse state
-  const pulsesRef = useRef<DataPulse[]>([]);
-  const nextPulseTimeRef = useRef(3 + Math.random() * 2);
-
-  // Temp objects for matrix composition (avoid allocation in loop)
-  const tmpMatrix = useMemo(() => new THREE.Matrix4(), []);
-  const tmpPos = useMemo(() => new THREE.Vector3(), []);
-  const tmpScale = useMemo(() => new THREE.Vector3(), []);
-  const tmpQuat = useMemo(() => new THREE.Quaternion(), []);
-  const mouseWorld = useMemo(() => new THREE.Vector3(), []);
-  const tmpDir = useMemo(() => new THREE.Vector3(), []);
-
-  // --- Shape geometries & instanced meshes ---
-  const shapeGeos = useMemo(() => {
-    const tetra = new THREE.TetrahedronGeometry(0.03, 0);
-    const octa = new THREE.OctahedronGeometry(0.025, 0);
-    const cross = createCrossGeometry();
-    const diamond = createDiamondGeometry();
-    return [tetra, octa, cross, diamond];
-  }, []);
-
-  const shapeMaterials = useMemo(() => {
-    return shapeGeos.map(
-      () =>
-        new THREE.MeshBasicMaterial({
-          color: GOLD_VEC,
-          transparent: true,
-          opacity: 0.7,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        })
-    );
-  }, [shapeGeos]);
-
-  // Refs for the 4 instanced meshes
-  const instancedRefs = useRef<(THREE.InstancedMesh | null)[]>([
-    null,
-    null,
-    null,
-    null,
-  ]);
-
-  // Store ref callback
-  const setInstancedRef = useCallback(
-    (index: number) => (el: THREE.InstancedMesh | null) => {
-      instancedRefs.current[index] = el;
-    },
+  // --- GPU resources (deterministic, so safe to create during render) ---
+  const shapeGeos = useMemo(
+    () => [
+      new THREE.TetrahedronGeometry(0.03, 0),
+      new THREE.OctahedronGeometry(0.025, 0),
+      createCrossGeometry(),
+      createDiamondGeometry(),
+    ],
     []
   );
 
-  // --- Connection line geometry (pre-allocated) ---
+  const shapeMaterials = useMemo(
+    () =>
+      shapeGeos.map(
+        () =>
+          new THREE.MeshBasicMaterial({
+            color: GOLD_VEC,
+            transparent: true,
+            opacity: 0.7,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+          })
+      ),
+    [shapeGeos]
+  );
+
   const lineGeo = useMemo(() => {
     const geo = new THREE.BufferGeometry();
     const posArr = new Float32Array(MAX_CONNECTIONS * 2 * 3);
@@ -196,39 +210,40 @@ function NeuralNetwork({ mouseX, mouseY, reducedMotion }: NeuralNetworkProps) {
     []
   );
 
-  // Count instances per shape type
-  const instanceCounts = useMemo(() => {
-    const counts = [0, 0, 0, 0];
-    for (let i = 0; i < NODE_COUNT; i++) {
-      counts[stableData.shapeAssignments[i]]++;
-    }
-    return counts;
-  }, [stableData]);
-
-  // Map: for each shape type, which global node indices belong to it
-  const shapeNodeIndices = useMemo(() => {
-    const indices: number[][] = [[], [], [], []];
-    for (let i = 0; i < NODE_COUNT; i++) {
-      indices[stableData.shapeAssignments[i]].push(i);
-    }
-    return indices;
-  }, [stableData]);
+  useEffect(
+    () => () => {
+      shapeGeos.forEach((g) => g.dispose());
+      shapeMaterials.forEach((m) => m.dispose());
+      lineGeo.dispose();
+      lineMat.dispose();
+    },
+    [shapeGeos, shapeMaterials, lineGeo, lineMat]
+  );
 
   // ------------------------------------------------------------------
   // Animation loop
   // ------------------------------------------------------------------
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     const group = groupRef.current;
     if (!group) return;
 
-    const time = state.clock.elapsedTime;
+    const s = (stateRef.current ??= createSceneState());
+    // Own clock: R3F resets its clock whenever the frameloop is toggled, and a
+    // capped delta means a paused tab never produces a jump.
+    const dt = Math.min(delta, 0.1);
+    s.time += dt;
+    const time = s.time;
     const {
       basePositions,
+      positions,
       seeds,
       pulsePhases,
       pulseRates,
-    } = stableData;
+      pulseBoost,
+      neighbors,
+      mouseWorld,
+    } = s;
 
     // --- 1. Drift animation (skip if reduced motion) ---
     if (!reducedMotion) {
@@ -237,98 +252,81 @@ function NeuralNetwork({ mouseX, mouseY, reducedMotion }: NeuralNetworkProps) {
         const sx = seeds[i3];
         const sy = seeds[i3 + 1];
         const sz = seeds[i3 + 2];
-        const drift = 0.15;
 
         positions[i3] =
           basePositions[i3] +
-          Math.sin(time * 0.3 + sx) * drift +
-          Math.cos(time * 0.5 + sz) * drift * 0.5;
+          Math.sin(time * 0.3 + sx) * DRIFT +
+          Math.cos(time * 0.5 + sz) * DRIFT * 0.5;
         positions[i3 + 1] =
           basePositions[i3 + 1] +
-          Math.cos(time * 0.4 + sy) * drift +
-          Math.sin(time * 0.6 + sx) * drift * 0.5;
+          Math.cos(time * 0.4 + sy) * DRIFT +
+          Math.sin(time * 0.6 + sx) * DRIFT * 0.5;
         positions[i3 + 2] =
           basePositions[i3 + 2] +
-          Math.sin(time * 0.35 + sz) * drift +
-          Math.cos(time * 0.45 + sy) * drift * 0.5;
+          Math.sin(time * 0.35 + sz) * DRIFT +
+          Math.cos(time * 0.45 + sy) * DRIFT * 0.5;
       }
     } else {
-      // Static: just use base positions
       positions.set(basePositions);
     }
 
-    // --- 2. Mouse → world position ---
-    tmpDir.set(mouseX, mouseY, 0.5).unproject(camera);
-    tmpDir.sub(camera.position).normalize();
-    const dist = -camera.position.z / tmpDir.z;
-    mouseWorld
-      .copy(camera.position)
-      .add(tmpDir.multiplyScalar(dist));
+    // --- 2. Mouse → world position (on the z = 0 plane) ---
+    const mouseX = pointer.current?.x ?? 0;
+    const mouseY = pointer.current?.y ?? 0;
+    s.dir.set(mouseX, mouseY, 0.5).unproject(camera);
+    s.dir.sub(camera.position).normalize();
+    const dist = -camera.position.z / s.dir.z;
+    mouseWorld.copy(camera.position).add(s.dir.multiplyScalar(dist));
 
     // --- 3. Rebuild spatial hash ---
-    spatialHash.clear();
-    for (let i = 0; i < NODE_COUNT; i++) {
-      spatialHash.insert(
-        i,
-        positions[i * 3],
-        positions[i * 3 + 1],
-        positions[i * 3 + 2]
-      );
-    }
+    s.hash.build(positions, NODE_COUNT);
 
     // --- 4. Compute connection lines ---
-    const linePosAttr = lineGeo.getAttribute(
-      "position"
-    ) as THREE.BufferAttribute;
+    const linePosAttr = lineGeo.getAttribute("position") as THREE.BufferAttribute;
     const lineColAttr = lineGeo.getAttribute("color") as THREE.BufferAttribute;
     const linePos = linePosAttr.array as Float32Array;
     const lineCol = lineColAttr.array as Float32Array;
+    const mouseRadiusSq = MOUSE_INFLUENCE_RADIUS * MOUSE_INFLUENCE_RADIUS;
     let lineCount = 0;
 
-    // Track visited pairs to avoid duplicates
-    const visited = new Set<string>();
-
     for (let i = 0; i < NODE_COUNT && lineCount < MAX_CONNECTIONS; i++) {
-      const ix = positions[i * 3];
-      const iy = positions[i * 3 + 1];
-      const iz = positions[i * 3 + 2];
+      const i3 = i * 3;
+      const ix = positions[i3];
+      const iy = positions[i3 + 1];
+      const iz = positions[i3 + 2];
 
-      // Distance from this node to mouse
       const dxm = ix - mouseWorld.x;
       const dym = iy - mouseWorld.y;
       const dzm = iz - mouseWorld.z;
-      const distToMouse = Math.sqrt(dxm * dxm + dym * dym + dzm * dzm);
-      const nearMouse = distToMouse < MOUSE_INFLUENCE_RADIUS;
+      const nearMouse = dxm * dxm + dym * dym + dzm * dzm < mouseRadiusSq;
 
       const threshold = nearMouse
         ? MOUSE_CONNECTION_THRESHOLD
         : CONNECTION_THRESHOLD;
+      const thresholdSq = threshold * threshold;
 
-      const neighbors = spatialHash.queryRadius(ix, iy, iz, threshold);
+      // Each node lives in exactly one cell and every cell is visited once, so
+      // a neighbour can only appear once per query; `j <= i` removes mirrors.
+      const n = s.hash.queryRadius(ix, iy, iz, threshold, neighbors);
 
-      for (let n = 0; n < neighbors.length && lineCount < MAX_CONNECTIONS; n++) {
-        const j = neighbors[n];
+      for (let k = 0; k < n && lineCount < MAX_CONNECTIONS; k++) {
+        const j = neighbors[k];
         if (j <= i) continue;
 
-        const pairKey = i < j ? `${i},${j}` : `${j},${i}`;
-        if (visited.has(pairKey)) continue;
-
-        const jx = positions[j * 3];
-        const jy = positions[j * 3 + 1];
-        const jz = positions[j * 3 + 2];
+        const j3 = j * 3;
+        const jx = positions[j3];
+        const jy = positions[j3 + 1];
+        const jz = positions[j3 + 2];
 
         const dx = ix - jx;
         const dy = iy - jy;
         const dz = iz - jz;
-        const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-        if (d > threshold) continue;
-
-        visited.add(pairKey);
+        const dSq = dx * dx + dy * dy + dz * dz;
+        if (dSq > thresholdSq) continue;
 
         // Alpha based on distance and mouse proximity
-        const baseAlpha = 1 - d / threshold;
-        const alpha = nearMouse ? baseAlpha * 1.0 : baseAlpha * 0.4;
+        const baseAlpha = 1 - Math.sqrt(dSq) / threshold;
+        const alpha = nearMouse ? baseAlpha : baseAlpha * 0.4;
 
         const r = GOLD_VEC.r * alpha;
         const g = GOLD_VEC.g * alpha;
@@ -359,10 +357,9 @@ function NeuralNetwork({ mouseX, mouseY, reducedMotion }: NeuralNetworkProps) {
 
     // --- 5. Data pulse waves (skip if reduced motion) ---
     if (!reducedMotion) {
-      // Trigger new pulse
-      if (time > nextPulseTimeRef.current) {
+      if (time > s.nextPulseTime) {
         const originIdx = Math.floor(Math.random() * NODE_COUNT);
-        pulsesRef.current.push({
+        s.pulses.push({
           origin: new THREE.Vector3(
             positions[originIdx * 3],
             positions[originIdx * 3 + 1],
@@ -372,29 +369,32 @@ function NeuralNetwork({ mouseX, mouseY, reducedMotion }: NeuralNetworkProps) {
           speed: 2.0,
           maxRadius: 4.0,
         });
-        nextPulseTimeRef.current = time + 3 + Math.random() * 2;
+        s.nextPulseTime = time + 3 + Math.random() * 2;
       }
 
-      // Process active pulses
-      const activePulses: DataPulse[] = [];
-      for (const pulse of pulsesRef.current) {
-        const elapsed = time - pulse.startTime;
-        const radius = elapsed * pulse.speed;
+      // Process active pulses, compacting finished ones out in place
+      let live = 0;
+      for (let p = 0; p < s.pulses.length; p++) {
+        const pulse = s.pulses[p];
+        const radius = (time - pulse.startTime) * pulse.speed;
         if (radius > pulse.maxRadius) continue;
-        activePulses.push(pulse);
+        s.pulses[live++] = pulse;
 
+        const ox = pulse.origin.x;
+        const oy = pulse.origin.y;
+        const oz = pulse.origin.z;
         for (let i = 0; i < NODE_COUNT; i++) {
-          const dx = positions[i * 3] - pulse.origin.x;
-          const dy = positions[i * 3 + 1] - pulse.origin.y;
-          const dz = positions[i * 3 + 2] - pulse.origin.z;
+          const i3 = i * 3;
+          const dx = positions[i3] - ox;
+          const dy = positions[i3 + 1] - oy;
+          const dz = positions[i3 + 2] - oz;
           const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-          if (Math.abs(d - radius) < 0.3) {
-            pulseBoost[i] = Math.max(pulseBoost[i], 1.5);
+          if (Math.abs(d - radius) < 0.3 && pulseBoost[i] < 1.5) {
+            pulseBoost[i] = 1.5;
           }
         }
       }
-      pulsesRef.current = activePulses;
+      s.pulses.length = live;
 
       // Decay pulse boost
       for (let i = 0; i < NODE_COUNT; i++) {
@@ -404,28 +404,26 @@ function NeuralNetwork({ mouseX, mouseY, reducedMotion }: NeuralNetworkProps) {
     }
 
     // --- 6. Update instanced meshes ---
-    for (let s = 0; s < SHAPE_TYPES; s++) {
-      const mesh = instancedRefs.current[s];
+    for (let shape = 0; shape < SHAPE_TYPES; shape++) {
+      const mesh = instancedRefs.current[shape];
       if (!mesh) continue;
 
-      const nodeIndices = shapeNodeIndices[s];
-      for (let inst = 0; inst < nodeIndices.length; inst++) {
-        const ni = nodeIndices[inst];
+      const count = INSTANCE_COUNTS[shape];
+      for (let inst = 0; inst < count; inst++) {
+        const ni = inst * SHAPE_TYPES + shape;
         const i3 = ni * 3;
 
-        tmpPos.set(positions[i3], positions[i3 + 1], positions[i3 + 2]);
+        s.pos.set(positions[i3], positions[i3 + 1], positions[i3 + 2]);
 
         // Scale: base + synapse pulse + data pulse boost
         const synapsePulse = reducedMotion
           ? 1
-          : 0.8 +
-            0.4 * Math.sin(time * pulseRates[ni] + pulsePhases[ni]);
-        const boost = 1 + pulseBoost[ni];
-        const scale = synapsePulse * boost;
-        tmpScale.set(scale, scale, scale);
+          : 0.8 + 0.4 * Math.sin(time * pulseRates[ni] + pulsePhases[ni]);
+        const scale = synapsePulse * (1 + pulseBoost[ni]);
+        s.scale.set(scale, scale, scale);
 
-        tmpMatrix.compose(tmpPos, tmpQuat, tmpScale);
-        mesh.setMatrixAt(inst, tmpMatrix);
+        s.matrix.compose(s.pos, s.quat, s.scale);
+        mesh.setMatrixAt(inst, s.matrix);
       }
       mesh.instanceMatrix.needsUpdate = true;
     }
@@ -434,13 +432,8 @@ function NeuralNetwork({ mouseX, mouseY, reducedMotion }: NeuralNetworkProps) {
     if (!reducedMotion) {
       const targetRotX = mouseY * 0.15;
       const targetRotY = mouseX * 0.15;
-      group.rotation.x += (targetRotX - group.rotation.x) * 2 * delta;
-      group.rotation.y += (targetRotY - group.rotation.y) * 2 * delta;
-    }
-
-    // --- 8. Slow overall rotation ---
-    if (!reducedMotion && lineSegRef.current) {
-      // Apply to the inner content group (instanced meshes rotate with lines)
+      group.rotation.x += (targetRotX - group.rotation.x) * 2 * dt;
+      group.rotation.y += (targetRotY - group.rotation.y) * 2 * dt;
     }
   });
 
@@ -455,14 +448,16 @@ function NeuralNetwork({ mouseX, mouseY, reducedMotion }: NeuralNetworkProps) {
         {shapeGeos.map((geo, idx) => (
           <instancedMesh
             key={idx}
-            ref={setInstancedRef(idx)}
-            args={[geo, shapeMaterials[idx], instanceCounts[idx]]}
+            ref={(el) => {
+              instancedRefs.current[idx] = el;
+            }}
+            args={[geo, shapeMaterials[idx], INSTANCE_COUNTS[idx]]}
             frustumCulled={false}
           />
         ))}
 
         {/* Connection lines */}
-        <lineSegments ref={lineSegRef} geometry={lineGeo} material={lineMat} />
+        <lineSegments geometry={lineGeo} material={lineMat} />
       </Float>
     </group>
   );
@@ -487,31 +482,34 @@ function Lights() {
 // ---------------------------------------------------------------------------
 
 interface HeroSceneProps {
-  mouseX?: number;
-  mouseY?: number;
+  /** Shared, mutable pointer position so mouse moves never re-render React. */
+  pointer: RefObject<ScenePointer>;
+  /**
+   * When false the scene renders only when something changes (a resize, the
+   * initial frame) instead of every animation frame. Used while the scene is
+   * hidden behind the loading screen or scrolled out of view.
+   */
+  active?: boolean;
   className?: string;
   reducedMotion?: boolean;
 }
 
 export function HeroScene({
-  mouseX = 0,
-  mouseY = 0,
+  pointer,
+  active = true,
   className,
   reducedMotion = false,
 }: HeroSceneProps) {
   return (
     <div className={`absolute inset-0 ${className ?? ""}`}>
       <Canvas
+        frameloop={active ? "always" : "demand"}
         gl={{ alpha: true, antialias: true }}
         dpr={[1, 2]}
         camera={{ position: [0, 0, 5], fov: 75 }}
       >
         <Lights />
-        <NeuralNetwork
-          mouseX={mouseX}
-          mouseY={mouseY}
-          reducedMotion={reducedMotion}
-        />
+        <NeuralNetwork pointer={pointer} reducedMotion={reducedMotion} />
         <AdaptiveDpr pixelated />
         <AdaptiveEvents />
       </Canvas>

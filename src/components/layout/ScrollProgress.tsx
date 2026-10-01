@@ -7,19 +7,17 @@ export function ScrollProgress() {
   const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!barRef.current) return;
+    const bar = barRef.current;
+    if (!bar) return;
 
-    gsap.set(barRef.current, { scaleX: 0 });
+    gsap.set(bar, { scaleX: 0 });
+    // One reusable tween instead of a new gsap.to() on every scroll event
+    const setScale = gsap.quickTo(bar, "scaleX", { duration: 0.1, ease: "none" });
 
     const updateProgress = () => {
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
-      gsap.to(barRef.current, {
-        scaleX: progress,
-        duration: 0.1,
-        ease: "none",
-      });
+      setScale(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
     };
 
     window.addEventListener("scroll", updateProgress, { passive: true });

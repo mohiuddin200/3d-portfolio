@@ -10,6 +10,7 @@ export interface Project {
   liveUrl?: string;
   githubUrl?: string;
   featured: boolean;
+  badge?: string;
   year: number;
 }
 
@@ -59,4 +60,4 @@ export interface SocialLink {
   size: "sm" | "md" | "lg";
 }
 
-export type CursorVariant = "default" | "link" | "text";
+export type CursorVariant = "default" | "link" | "hover";

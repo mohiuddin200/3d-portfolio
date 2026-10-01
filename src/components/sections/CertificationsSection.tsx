@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 import { motion } from "motion/react";
 import { useSectionInView } from "@/hooks/useSectionInView";
 import {
@@ -85,7 +85,10 @@ export default function CertificationsSection() {
               }}
               className="rounded-xl"
             >
-              <Card className="h-full bg-white/5 border-white/10 hover:border-[#FFD700]/40 transition-colors duration-300">
+              <Card
+                data-cursor="hover"
+                className="h-full bg-white/5 border-white/10 hover:border-[#FFD700]/40 transition-colors duration-300"
+              >
                 <CardHeader>
                   <CardDescription className="text-[#FFD700] text-xs font-semibold uppercase tracking-wider">
                     {cert.issuer}

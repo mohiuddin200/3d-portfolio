@@ -4,32 +4,82 @@ import { useRef, useEffect, useState } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { motion, AnimatePresence } from "motion/react";
 import { withSceneLoader } from "@/components/three/SceneLoader";
-import { useMousePosition } from "@/hooks/useMousePosition";
+import type { ScenePointer } from "@/components/three/HeroScene";
 import { useAnimation } from "@/components/providers/AnimationProvider";
 import { useLoading } from "@/components/providers/LoadingProvider";
 import { HERO_TITLES, HERO_SUBTITLE } from "@/data/hero";
 
-const HeroSceneLoader = withSceneLoader(
-  () => import("@/components/three/HeroScene")
-);
+const loadHeroScene = () => import("@/components/three/HeroScene");
+const HeroSceneLoader = withSceneLoader(loadHeroScene);
+
+// Kick off the three.js chunk download as soon as this module evaluates,
+// instead of after hydration when the component first mounts. The splash waits
+// for `load`, so the sooner this chunk lands, the sooner the hero can appear.
+if (typeof window !== "undefined") {
+  void loadHeroScene();
+}
+
+/** Cycles through HERO_TITLES. Isolated so its 3s tick re-renders only itself. */
+function RotatingTitle() {
+  const [titleIndex, setTitleIndex] = useState(0);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTitleIndex((prev) => (prev + 1) % HERO_TITLES.length);
+    }, 3000);
+    return () => clearInterval(intervalId);
+  }, []);
+
+  return (
+    <div className="h-12 sm:h-16 md:h-20 flex items-center justify-center overflow-hidden mb-8">
+      <AnimatePresence mode="wait">
+        <motion.h2
+          key={titleIndex}
+          initial={{ y: 40, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -40, opacity: 0 }}
+          transition={{ duration: 0.5, ease: "easeInOut" }}
+          className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white/90 text-center holographic-subtitle"
+        >
+          {HERO_TITLES[titleIndex]}
+        </motion.h2>
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const nameRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
-  const mouse = useMousePosition();
+  // The 3D scene reads this every frame; writing to a ref instead of state
+  // means mouse movement never re-renders the hero.
+  const pointerRef = useRef<ScenePointer>({ x: 0, y: 0 });
   const { reducedMotion } = useAnimation();
   const { isLoaded } = useLoading();
+  const [inView, setInView] = useState(true);
 
-  const [titleIndex, setTitleIndex] = useState(0);
-
-  // Rotating title
+  // Track the pointer without React state
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTitleIndex((prev) => (prev + 1) % HERO_TITLES.length);
-    }, 3000);
-    return () => clearInterval(intervalId);
+    const onMove = (e: MouseEvent) => {
+      pointerRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointerRef.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+
+  // Pause the 3D scene while the hero is scrolled out of view
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   // Character-by-character stagger animation for name
@@ -132,8 +182,8 @@ export default function HeroSection() {
     >
       {/* 3D Scene Background */}
       <HeroSceneLoader
-        mouseX={mouse.normalizedX}
-        mouseY={mouse.normalizedY}
+        pointer={pointerRef}
+        active={isLoaded && inView}
         reducedMotion={reducedMotion}
         className="z-0"
       />
@@ -163,10 +213,7 @@ export default function HeroSection() {
                 <motion.span
                   key={i}
                   className="name-char inline-block cursor-pointer"
-                  style={{
-                    opacity: 0,
-                    color: char === " " ? undefined : undefined,
-                  }}
+                  style={{ opacity: 0 }}
                   whileHover={{
                     y: -10,
                     color: "#FFD700",
@@ -175,27 +222,14 @@ export default function HeroSection() {
                     transition: { duration: 0.2 },
                   }}
                 >
-                  {char === " " ? "\u00A0" : char}
+                  {char === " " ? " " : char}
                 </motion.span>
               ))}
             </h1>
           </div>
 
           {/* Rotating Title */}
-          <div className="h-12 sm:h-16 md:h-20 flex items-center justify-center overflow-hidden mb-8">
-            <AnimatePresence mode="wait">
-              <motion.h2
-                key={titleIndex}
-                initial={{ y: 40, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -40, opacity: 0 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-                className="text-2xl sm:text-3xl md:text-5xl font-semibold text-white/90 text-center holographic-subtitle"
-              >
-                {HERO_TITLES[titleIndex]}
-              </motion.h2>
-            </AnimatePresence>
-          </div>
+          <RotatingTitle />
 
           {/* Subtitle */}
           <p

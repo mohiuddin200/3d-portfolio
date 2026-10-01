@@ -1,7 +1,7 @@
 export const HERO_TITLES = [
   "Full Stack Developer",
   "Creative Technologist",
-  "UI/UX Enthusiast",
+  "Agentic Engineer",
   "Problem Solver",
 ] as const;
 

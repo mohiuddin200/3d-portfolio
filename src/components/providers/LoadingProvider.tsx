@@ -3,10 +3,18 @@
 import {
   createContext,
   useContext,
-  useState,
   useEffect,
+  useMemo,
+  useState,
   type ReactNode,
 } from "react";
+import {
+  SPLASH_MAX_MS,
+  SPLASH_MIN_MS,
+  markSplashShown,
+  splashStartTime,
+  useSplashShown,
+} from "@/lib/splash";
 
 interface LoadingContextValue {
   isLoaded: boolean;
@@ -15,55 +23,53 @@ interface LoadingContextValue {
 const LoadingContext = createContext<LoadingContextValue>({ isLoaded: true });
 
 export function LoadingProvider({ children }: { children: ReactNode }) {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [skipSplash, setSkipSplash] = useState(false);
+  // Splash already shown in this tab → treat the page as loaded immediately.
+  const splashShown = useSplashShown();
+  const [finished, setFinished] = useState(false);
+  const isLoaded = splashShown || finished;
 
   useEffect(() => {
-    // Skip splash if already shown in this tab session
-    if (sessionStorage.getItem("splashShown")) {
-      setIsLoaded(true);
-      setSkipSplash(true);
-      return;
-    }
+    if (splashShown) return;
 
+    let done = false;
     let timerDone = false;
     let documentReady = document.readyState === "complete";
 
+    const finish = () => {
+      if (done) return;
+      done = true;
+      setFinished(true);
+      markSplashShown();
+      document.body.style.overflow = "";
+    };
     const tryFinish = () => {
-      if (timerDone && documentReady) {
-        setIsLoaded(true);
-        sessionStorage.setItem("splashShown", "true");
-        document.body.style.overflow = "";
-      }
+      if (timerDone && documentReady) finish();
     };
 
     // Lock scroll during loading
     document.body.style.overflow = "hidden";
 
-    // Minimum display time
+    // Timers count from when the splash was first painted, not from hydration,
+    // so a slow device does not pay for hydration twice.
+    const start = splashStartTime();
+    const now = performance.now();
+
     const minTimer = setTimeout(() => {
       timerDone = true;
       tryFinish();
-    }, 2500);
+    }, Math.max(0, start + SPLASH_MIN_MS - now));
 
-    // Wait for document ready
     const onReady = () => {
       documentReady = true;
       tryFinish();
     };
+    if (!documentReady) window.addEventListener("load", onReady);
 
-    if (documentReady) {
-      // already complete
-    } else {
-      window.addEventListener("load", onReady);
-    }
-
-    // Safety cap — always dismiss after 5s
-    const safetyTimer = setTimeout(() => {
-      setIsLoaded(true);
-      sessionStorage.setItem("splashShown", "true");
-      document.body.style.overflow = "";
-    }, 5000);
+    // Safety cap — always dismiss eventually
+    const safetyTimer = setTimeout(
+      finish,
+      Math.max(0, start + SPLASH_MAX_MS - now)
+    );
 
     return () => {
       clearTimeout(minTimer);
@@ -71,21 +77,12 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("load", onReady);
       document.body.style.overflow = "";
     };
-  }, []);
+  }, [splashShown]);
 
-  // If skipping splash, don't even mount the loading state as false
-  if (skipSplash) {
-    return (
-      <LoadingContext.Provider value={{ isLoaded: true }}>
-        {children}
-      </LoadingContext.Provider>
-    );
-  }
+  const value = useMemo(() => ({ isLoaded }), [isLoaded]);
 
   return (
-    <LoadingContext.Provider value={{ isLoaded }}>
-      {children}
-    </LoadingContext.Provider>
+    <LoadingContext.Provider value={value}>{children}</LoadingContext.Provider>
   );
 }
 

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { withSceneLoader } from "@/components/three/SceneLoader";
-import { useCursor } from "@/components/providers/CursorProvider";
+import type { ScenePointer } from "@/components/three/HeroScene";
 
 const Lost404Scene = withSceneLoader(
   () => import("@/components/three/Lost404Scene")
@@ -19,37 +19,35 @@ const QUIPS = [
   "The server shrugged. Eloquently.",
 ];
 
+// Pick the first quip at random on the client only. The server always renders
+// quip 0 so the HTML matches during hydration; React swaps it in afterwards.
+let firstQuip: number | null = null;
+const subscribeNoop = () => () => {};
+const getFirstQuip = () => (firstQuip ??= Math.floor(Math.random() * QUIPS.length));
+const getServerQuip = () => 0;
+
 export default function NotFound() {
   const reducedMotion = useReducedMotion() ?? false;
-  const { setVariant } = useCursor();
-  const [mouse, setMouse] = useState({ x: 0, y: 0 });
-  const [quipIndex, setQuipIndex] = useState(0);
-  const rafRef = useRef<number | null>(null);
+  // The scene reads the pointer every frame; a ref keeps mouse moves from re-rendering the page.
+  const pointerRef = useRef<ScenePointer>({ x: 0, y: 0 });
+  const startQuip = useSyncExternalStore(subscribeNoop, getFirstQuip, getServerQuip);
+  const [quipOffset, setQuipOffset] = useState(0);
+  const quipIndex = (startQuip + quipOffset) % QUIPS.length;
 
   useEffect(() => {
-    setQuipIndex(Math.floor(Math.random() * QUIPS.length));
     const id = window.setInterval(() => {
-      setQuipIndex((i) => (i + 1) % QUIPS.length);
+      setQuipOffset((i) => i + 1);
     }, 4200);
     return () => window.clearInterval(id);
   }, []);
 
   useEffect(() => {
     function onMove(e: PointerEvent) {
-      if (rafRef.current !== null) return;
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = null;
-        setMouse({
-          x: (e.clientX / window.innerWidth) * 2 - 1,
-          y: -((e.clientY / window.innerHeight) * 2 - 1),
-        });
-      });
+      pointerRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointerRef.current.y = -((e.clientY / window.innerHeight) * 2 - 1);
     }
-    window.addEventListener("pointermove", onMove);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
   const container = {
@@ -80,19 +78,10 @@ export default function NotFound() {
     },
   };
 
-  const linkHover = {
-    onMouseEnter: () => setVariant("link"),
-    onMouseLeave: () => setVariant("default"),
-  };
-
   return (
     <main className="relative flex min-h-screen w-full items-center justify-center overflow-hidden bg-bg-primary">
       <div className="absolute inset-0 z-0">
-        <Lost404Scene
-          mouseX={mouse.x}
-          mouseY={mouse.y}
-          reducedMotion={reducedMotion}
-        />
+        <Lost404Scene pointer={pointerRef} reducedMotion={reducedMotion} />
       </div>
 
       <div
@@ -151,7 +140,6 @@ export default function NotFound() {
         >
           <Link
             href="/"
-            {...linkHover}
             className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-md border border-gold bg-gold px-7 py-3 text-sm font-semibold text-black transition-transform duration-300 hover:scale-[1.03]"
           >
             <span className="relative z-10">← Back to Home</span>
@@ -162,7 +150,6 @@ export default function NotFound() {
           </Link>
           <Link
             href="/#projects"
-            {...linkHover}
             className="inline-flex items-center justify-center gap-2 rounded-md border border-gold/60 bg-transparent px-7 py-3 text-sm font-semibold text-gold transition-all duration-300 hover:border-gold hover:bg-gold/10 hover:scale-[1.03]"
           >
             View Projects →

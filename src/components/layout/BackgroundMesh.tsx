@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useCallback } from "react";
+import { useLoading } from "@/components/providers/LoadingProvider";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -33,6 +34,9 @@ interface Dot {
 // ---------------------------------------------------------------------------
 
 export function BackgroundMesh() {
+  // The mesh sits behind the loading splash, so drawing before it is dismissed
+  // only burns CPU during the most contended part of page load.
+  const { isLoaded } = useLoading();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dotsRef = useRef<Dot[]>([]);
   const rafRef = useRef<number>(0);
@@ -138,14 +142,14 @@ export function BackgroundMesh() {
       rafRef.current = requestAnimationFrame(animate);
     };
 
-    rafRef.current = requestAnimationFrame(animate);
+    if (isLoaded) rafRef.current = requestAnimationFrame(animate);
 
     return () => {
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("resize", resize);
       motionQuery.removeEventListener("change", onMotionChange);
     };
-  }, [initDots]);
+  }, [initDots, isLoaded]);
 
   return (
     <canvas

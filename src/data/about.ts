@@ -9,14 +9,21 @@ export const ABOUT = {
     { label: "Years Experience", value: 2, suffix: "+" },
     { label: "Projects Built", value: 15, suffix: "+" },
     { label: "Technologies", value: 20, suffix: "+" },
-    { label: "Languages Spoken", value: 4, suffix: "" },
+    { label: "Years Agent-First", value: 2, suffix: "+" },
   ],
-  currentlyLearning: [
-    "AI Agent Orchestration & Flowise",
-    "Advanced Three.js & WebGL Shaders",
-    "Rust for WebAssembly",
-    "System Design & Microservices",
-  ],
+  currentCourse: {
+    title: "AI Coding Crash Course",
+    instructor: "Matt Pocock",
+    platform: "AI Hero",
+    topics: [
+      "Context management",
+      "Grilling → specs",
+      "AGENTS.md & skills",
+      "Subagents",
+      "Session-sized tasks",
+    ],
+    url: "https://www.aihero.dev/workshops/ai-coding-crash-course",
+  },
   languages: [
     { name: "Bangla", level: "Native", proficiency: 100 },
     { name: "English", level: "Proficient", proficiency: 85 },

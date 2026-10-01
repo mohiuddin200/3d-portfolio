@@ -11,6 +11,7 @@ export const NAV_ITEMS = [
   { label: "About", href: "#about" },
   { label: "Skills", href: "#skills" },
   { label: "Experience", href: "#experience" },
+  { label: "How I Build", href: "#agentic" },
   { label: "Projects", href: "#projects" },
   { label: "Contact", href: "#contact" },
 ] as const;
@@ -20,6 +21,7 @@ export const SECTION_IDS = {
   about: "about",
   skills: "skills",
   experience: "experience",
+  agentic: "agentic",
   projects: "projects",
   contact: "contact",
 } as const;

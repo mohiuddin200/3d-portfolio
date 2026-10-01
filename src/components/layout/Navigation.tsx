@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useLenis } from "lenis/react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
-import { useCursor } from "@/components/providers/CursorProvider";
 import { NAV_ITEMS } from "@/lib/constants";
 import {
   Sheet,
@@ -20,7 +19,6 @@ export function Navigation() {
   const [activeSection, setActiveSection] = useState<string>("");
   const [mobileOpen, setMobileOpen] = useState(false);
   const lenis = useLenis();
-  const { setVariant } = useCursor();
 
   // Show/hide nav based on scroll position (appear after hero ~100vh)
   useEffect(() => {
@@ -97,14 +95,6 @@ export function Navigation() {
     [lenis]
   );
 
-  const handleMouseEnter = useCallback(() => {
-    setVariant("link");
-  }, [setVariant]);
-
-  const handleMouseLeave = useCallback(() => {
-    setVariant("default");
-  }, [setVariant]);
-
   return (
     <nav
       ref={navRef}
@@ -121,9 +111,7 @@ export function Navigation() {
             <button
               key={item.href}
               onClick={() => handleNavClick(item.href)}
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-              className={`relative px-4 py-2 text-sm font-medium transition-colors duration-300 rounded-full ${
+              className={`relative px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-300 rounded-full ${
                 isActive
                   ? "text-[#FFD700]"
                   : "text-white/70 hover:text-white"
@@ -145,8 +133,6 @@ export function Navigation() {
           <SheetTrigger asChild>
             <button
               className="flex items-center justify-center w-12 h-12 backdrop-blur-lg bg-black/50 border border-white/10 rounded-full"
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
               aria-label="Open menu"
             >
               <Menu className="w-5 h-5 text-white" />
@@ -166,8 +152,6 @@ export function Navigation() {
                   <SheetClose asChild key={item.href}>
                     <button
                       onClick={() => handleNavClick(item.href)}
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
                       className={`text-left px-4 py-3 text-base font-medium rounded-lg transition-colors duration-300 ${
                         isActive
                           ? "text-[#FFD700] bg-[#FFD700]/10"

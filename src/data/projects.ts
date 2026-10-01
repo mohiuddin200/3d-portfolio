@@ -28,6 +28,7 @@ export const PROJECTS: Project[] = [
       "SMS Gateway",
     ],
     liveUrl: "https://liftuno-website.vercel.app",
+    badge: "Built agent-first · 10 days",
     featured: true,
     year: 2026,
   },

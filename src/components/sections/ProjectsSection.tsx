@@ -1,12 +1,11 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 import { motion } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSectionInView } from "@/hooks/useSectionInView";
-import { useCursor } from "@/components/providers/CursorProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getFeaturedProjects } from "@/data/projects";
@@ -18,7 +17,6 @@ export default function ProjectsSection() {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const projectRefs = useRef<(HTMLDivElement | null)[]>([]);
   const imageRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const { setVariant } = useCursor();
 
   // Heading animation
   useEffect(() => {
@@ -137,8 +135,7 @@ export default function ProjectsSection() {
                   className={`${isEven ? "lg:order-1" : "lg:order-2"}`}
                 >
                   <motion.div
-                    onMouseEnter={() => setVariant("link")}
-                    onMouseLeave={() => setVariant("default")}
+                    data-cursor="link"
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
@@ -156,7 +153,6 @@ export default function ProjectsSection() {
                         fill
                         sizes="(min-width: 1024px) 50vw, 100vw"
                         className="object-cover object-left-top"
-                        priority={i === 0}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
                       {/* Year badge */}
@@ -177,9 +173,20 @@ export default function ProjectsSection() {
                   } space-y-5`}
                   style={{ opacity: 0 }}
                 >
-                  <p className="text-[#FFD700] text-sm font-mono uppercase tracking-wider">
-                    Featured Project
-                  </p>
+                  <div
+                    className={`flex flex-wrap items-center gap-3 ${
+                      !isEven ? "lg:justify-end" : ""
+                    }`}
+                  >
+                    <p className="text-[#FFD700] text-sm font-mono uppercase tracking-wider">
+                      Featured Project
+                    </p>
+                    {project.badge && (
+                      <span className="text-[11px] font-bold tracking-widest uppercase bg-[#FFD700]/15 text-[#FFD700] px-2.5 py-0.5 rounded-full border border-[#FFD700]/30">
+                        {project.badge}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-3xl sm:text-4xl font-bold text-white">
                     {project.title}
                   </h3>

@@ -179,6 +179,7 @@ export default function SkillsSection() {
                     ease: "easeOut"
                   }}
                   whileHover={{ y: -8, scale: 1.05, zIndex: 10 }}
+                  data-cursor="hover"
                   className="group relative rounded-xl border border-white/10 bg-black/40 p-4 backdrop-blur-md overflow-hidden flex flex-col items-center text-center hover:border-white/30 transition-colors duration-500"
                 >
                   {/* Glowing background on hover */}

@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap } from "@/lib/gsap";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCursor } from "@/components/providers/CursorProvider";
 import type { Project } from "@/types";
 import { PROJECTS } from "@/data/projects";
 
@@ -22,7 +21,6 @@ interface Props {
 
 export default function ProjectPageContent({ project }: Props) {
   const heroRef = useRef<HTMLDivElement>(null);
-  const { setVariant } = useCursor();
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const total = project.screenshots.length;
@@ -88,8 +86,6 @@ export default function ProjectPageContent({ project }: Props) {
               <Link
                 href="/#projects"
                 className="mb-4 inline-flex items-center gap-2 text-sm text-text-secondary transition-colors hover:text-gold"
-                onMouseEnter={() => setVariant("link")}
-                onMouseLeave={() => setVariant("default")}
               >
                 <svg
                   width="16"
@@ -172,8 +168,6 @@ export default function ProjectPageContent({ project }: Props) {
                   href={project.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onMouseEnter={() => setVariant("link")}
-                  onMouseLeave={() => setVariant("default")}
                 >
                   <Button className="w-full bg-gold text-black hover:bg-gold-dark">
                     View Live Site
@@ -185,8 +179,6 @@ export default function ProjectPageContent({ project }: Props) {
                   href={project.githubUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onMouseEnter={() => setVariant("link")}
-                  onMouseLeave={() => setVariant("default")}
                 >
                   <Button
                     variant="outline"
@@ -219,8 +211,6 @@ export default function ProjectPageContent({ project }: Props) {
                   aria-label={`Open ${project.title} screenshot ${i + 1} of ${total}`}
                   className="group relative aspect-video cursor-pointer overflow-hidden rounded-lg border border-white/10 bg-bg-card text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold"
                   whileHover={{ scale: 1.02 }}
-                  onMouseEnter={() => setVariant("link")}
-                  onMouseLeave={() => setVariant("default")}
                   onClick={() => setActiveIndex(i)}
                 >
                   <Image
@@ -276,8 +266,6 @@ export default function ProjectPageContent({ project }: Props) {
                         type="button"
                         aria-label="Previous screenshot"
                         onClick={showPrev}
-                        onMouseEnter={() => setVariant("link")}
-                        onMouseLeave={() => setVariant("default")}
                         className="absolute left-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur-sm transition-colors hover:bg-gold hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold sm:left-4 sm:size-12"
                       >
                         <svg
@@ -297,8 +285,6 @@ export default function ProjectPageContent({ project }: Props) {
                         type="button"
                         aria-label="Next screenshot"
                         onClick={showNext}
-                        onMouseEnter={() => setVariant("link")}
-                        onMouseLeave={() => setVariant("default")}
                         className="absolute right-2 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur-sm transition-colors hover:bg-gold hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold sm:right-4 sm:size-12"
                       >
                         <svg
@@ -341,8 +327,6 @@ export default function ProjectPageContent({ project }: Props) {
                 <button
                   onClick={() => setVideoLoaded(true)}
                   className="absolute inset-0 flex flex-col items-center justify-center gap-4 transition-colors hover:bg-white/5"
-                  onMouseEnter={() => setVariant("link")}
-                  onMouseLeave={() => setVariant("default")}
                 >
                   <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-gold bg-gold/10">
                     <svg
@@ -378,8 +362,6 @@ export default function ProjectPageContent({ project }: Props) {
             <Link
               href={`/projects/${prevProject.slug}`}
               className="group flex items-center gap-2 text-text-secondary transition-colors hover:text-gold"
-              onMouseEnter={() => setVariant("link")}
-              onMouseLeave={() => setVariant("default")}
             >
               <svg
                 width="20"
@@ -400,8 +382,6 @@ export default function ProjectPageContent({ project }: Props) {
           <Link
             href="/#projects"
             className="text-sm text-text-secondary transition-colors hover:text-gold"
-            onMouseEnter={() => setVariant("link")}
-            onMouseLeave={() => setVariant("default")}
           >
             All Projects
           </Link>
@@ -409,8 +389,6 @@ export default function ProjectPageContent({ project }: Props) {
             <Link
               href={`/projects/${nextProject.slug}`}
               className="group flex items-center gap-2 text-text-secondary transition-colors hover:text-gold"
-              onMouseEnter={() => setVariant("link")}
-              onMouseLeave={() => setVariant("default")}
             >
               <span className="hidden sm:inline">{nextProject.title}</span>
               <span className="sm:hidden">Next</span>

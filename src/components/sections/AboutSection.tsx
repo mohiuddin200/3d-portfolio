@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef, useEffect, useState } from "react";
+import { gsap } from "@/lib/gsap";
+import Image from "next/image";
 import { useSectionInView } from "@/hooks/useSectionInView";
-import { useCursor } from "@/components/providers/CursorProvider";
 import { Badge } from "@/components/ui/badge";
 import { ABOUT } from "@/data/about";
 
@@ -19,30 +19,29 @@ function AnimatedCounter({
   suffix: string;
   triggered: boolean;
 }) {
-  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
 
+  // Write straight to the DOM: a React render per GSAP tick is wasted work.
   useEffect(() => {
-    if (!triggered) return;
+    const el = ref.current;
+    if (!triggered || !el) return;
 
     const obj = { val: 0 };
     const tween = gsap.to(obj, {
       val: target,
       duration: 2,
       ease: "power2.out",
-      onUpdate: () => setCount(Math.round(obj.val)),
+      onUpdate: () => {
+        el.textContent = `${Math.round(obj.val)}${suffix}`;
+      },
     });
 
     return () => {
       tween.kill();
     };
-  }, [triggered, target]);
+  }, [triggered, target, suffix]);
 
-  return (
-    <span>
-      {count}
-      {suffix}
-    </span>
-  );
+  return <span ref={ref}>0{suffix}</span>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -50,20 +49,15 @@ function AnimatedCounter({
 /* ------------------------------------------------------------------ */
 export default function AboutSection() {
   const { ref: sectionRef } = useSectionInView(0.2);
-  const { setVariant } = useCursor();
   const photoRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const bioRefs = useRef<(HTMLParagraphElement | null)[]>([]);
   const statsRef = useRef<HTMLDivElement>(null);
   const bottomGridRef = useRef<HTMLDivElement>(null);
-  const learningRefs = useRef<(HTMLDivElement | null)[]>([]);
   const languageRef = useRef<HTMLDivElement>(null);
   const badgeContainerRef = useRef<HTMLDivElement>(null);
 
   const [statsTriggered, setStatsTriggered] = useState(false);
-  const [activeLearningIndex, setActiveLearningIndex] = useState<number | null>(
-    null
-  );
 
   /* ---- Parallax photo ---- */
   useEffect(() => {
@@ -135,22 +129,6 @@ export default function AboutSection() {
     return () => ctx.revert();
   }, []);
 
-  /* ---- Currently Learning slide-in ---- */
-  useEffect(() => {
-    const valid = learningRefs.current.filter(Boolean);
-    if (valid.length === 0) return;
-    const ctx = gsap.context(() => {
-      valid.forEach((el, i) => {
-        gsap.fromTo(el, { x: 40, opacity: 0 }, {
-          x: 0, opacity: 1, duration: 0.5, ease: "power2.out",
-          scrollTrigger: { trigger: el, start: "top 90%", toggleActions: "play none none none" },
-          delay: i * 0.08,
-        });
-      });
-    });
-    return () => ctx.revert();
-  }, []);
-
   /* ---- Language bars ---- */
   useEffect(() => {
     if (!languageRef.current) return;
@@ -178,14 +156,6 @@ export default function AboutSection() {
     return () => ctx.revert();
   }, []);
 
-  const handleLearningHover = useCallback(
-    (index: number | null) => {
-      setActiveLearningIndex(index);
-      setVariant(index !== null ? "link" : "default");
-    },
-    [setVariant]
-  );
-
   return (
     <section
       ref={sectionRef}
@@ -201,10 +171,12 @@ export default function AboutSection() {
               ref={photoRef}
               className="relative w-72 h-96 sm:w-80 sm:h-[28rem] rounded-2xl border-2 border-[#FFD700] bg-white/5 overflow-hidden"
             >
-              <img
+              <Image
                 src="/profile.jpg"
                 alt="Md Mohiuddin — Full Stack Developer"
-                className="absolute inset-0 w-full h-full object-cover"
+                fill
+                sizes="(min-width: 640px) 320px, 288px"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/10 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-black/50 to-transparent" />
@@ -245,10 +217,9 @@ export default function AboutSection() {
             <div
               key={stat.label}
               data-stat-item
+              data-cursor="hover"
               className="group relative p-5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-[#FFD700]/30 hover:bg-[#FFD700]/[0.04] transition-all duration-300 text-center cursor-default"
               style={{ opacity: 0 }}
-              onMouseEnter={() => setVariant("text")}
-              onMouseLeave={() => setVariant("default")}
             >
               <div className="text-3xl sm:text-4xl font-bold text-[#FFD700] tabular-nums">
                 <AnimatedCounter target={stat.value} suffix={stat.suffix} triggered={statsTriggered} />
@@ -265,40 +236,44 @@ export default function AboutSection() {
           ref={bottomGridRef}
           className="grid grid-cols-1 md:grid-cols-3 gap-10 mt-16"
         >
-          {/* Currently Exploring */}
-          <div data-col style={{ opacity: 0 }}>
+          {/* Currently Learning */}
+          <div data-col className="flex flex-col" style={{ opacity: 0 }}>
             <h3 className="text-sm uppercase tracking-widest text-[#FFD700] mb-4 font-semibold">
-              Currently Exploring
+              Currently Learning
             </h3>
-            <div className="space-y-1.5">
-              {ABOUT.currentlyLearning.map((item, i) => (
-                <div
-                  key={item}
-                  ref={(el) => { learningRefs.current[i] = el; }}
-                  className={`group flex items-center gap-3 p-2.5 -mx-2.5 rounded-lg transition-all duration-300 cursor-default ${
-                    activeLearningIndex === i ? "bg-[#FFD700]/[0.06]" : "hover:bg-white/[0.03]"
-                  }`}
-                  style={{ opacity: 0 }}
-                  onMouseEnter={() => handleLearningHover(i)}
-                  onMouseLeave={() => handleLearningHover(null)}
-                >
+            <a
+              href={ABOUT.currentCourse.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-cursor="link"
+              className="group flex flex-1 flex-col rounded-xl border border-white/10 bg-white/[0.03] p-4 transition-all duration-300 hover:border-[#FFD700]/40 hover:bg-[#FFD700]/[0.04] hover:shadow-[0_10px_30px_-10px_rgba(255,215,0,0.2)]"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-white/40">
+                  {ABOUT.currentCourse.platform} · {ABOUT.currentCourse.instructor}
+                </span>
+                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#FFD700]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] animate-pulse" />
+                  In progress
+                </span>
+              </div>
+              <p className="mt-2 text-base font-semibold text-white">
+                {ABOUT.currentCourse.title}
+                <span className="ml-1.5 inline-block text-[#FFD700]/70 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+                  ↗
+                </span>
+              </p>
+              <div className="mt-auto pt-3 flex flex-wrap gap-1.5">
+                {ABOUT.currentCourse.topics.map((topic) => (
                   <span
-                    className={`w-1.5 h-1.5 rounded-full shrink-0 transition-all duration-300 ${
-                      activeLearningIndex === i
-                        ? "bg-[#FFD700] scale-150 shadow-[0_0_8px_rgba(255,215,0,0.5)]"
-                        : "bg-[#FFD700]/60 group-hover:bg-[#FFD700]"
-                    }`}
-                  />
-                  <span
-                    className={`text-sm transition-colors duration-300 ${
-                      activeLearningIndex === i ? "text-white" : "text-white/60 group-hover:text-white/80"
-                    }`}
+                    key={topic}
+                    className="rounded-full border border-white/10 px-2.5 py-0.5 text-[11px] text-white/60"
                   >
-                    {item}
+                    {topic}
                   </span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </a>
           </div>
 
           {/* Languages */}
@@ -339,11 +314,10 @@ export default function AboutSection() {
                 <Badge
                   key={interest}
                   data-badge
+                  data-cursor="hover"
                   variant="outline"
                   className="border-white/20 text-white/60 hover:border-[#FFD700]/50 hover:text-[#FFD700] hover:bg-[#FFD700]/[0.06] hover:scale-105 transition-all duration-300 px-3 py-1 cursor-default"
                   style={{ transform: "scale(0)", opacity: 0 }}
-                  onMouseEnter={() => setVariant("text")}
-                  onMouseLeave={() => setVariant("default")}
                 >
                   {interest}
                 </Badge>

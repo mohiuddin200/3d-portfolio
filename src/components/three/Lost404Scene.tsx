@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Float, AdaptiveDpr, AdaptiveEvents } from "@react-three/drei";
 import * as THREE from "three";
+import type { ScenePointer } from "@/components/three/HeroScene";
 
 const DEBRIS_COUNT = 140;
 const SPREAD = 7;
@@ -12,40 +13,68 @@ const MOUSE_SCATTER_FORCE = 1.4;
 const GOLD = "#FFD700";
 const GOLD_VEC = new THREE.Color(GOLD);
 
+// Created lazily on the first frame (Math.random must not run during render)
+// and mutated in place afterwards.
+interface DebrisState {
+  base: Float32Array;
+  seeds: Float32Array;
+  rotSeeds: Float32Array;
+  scales: Float32Array;
+  offsets: Float32Array;
+  matrix: THREE.Matrix4;
+  pos: THREE.Vector3;
+  quat: THREE.Quaternion;
+  scale: THREE.Vector3;
+  euler: THREE.Euler;
+  mouseWorld: THREE.Vector3;
+  dir: THREE.Vector3;
+}
+
+function createDebrisState(): DebrisState {
+  const base = new Float32Array(DEBRIS_COUNT * 3);
+  const seeds = new Float32Array(DEBRIS_COUNT * 3);
+  const rotSeeds = new Float32Array(DEBRIS_COUNT * 3);
+  const scales = new Float32Array(DEBRIS_COUNT);
+  for (let i = 0; i < DEBRIS_COUNT; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 2.2 + Math.cbrt(Math.random()) * (SPREAD - 2.2);
+    base[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    base[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    base[i * 3 + 2] = r * Math.cos(phi);
+    seeds[i * 3] = Math.random() * 100;
+    seeds[i * 3 + 1] = Math.random() * 100;
+    seeds[i * 3 + 2] = Math.random() * 100;
+    rotSeeds[i * 3] = Math.random() * Math.PI * 2;
+    rotSeeds[i * 3 + 1] = Math.random() * Math.PI * 2;
+    rotSeeds[i * 3 + 2] = Math.random() * Math.PI * 2;
+    scales[i] = 0.6 + Math.random() * 0.9;
+  }
+  return {
+    base,
+    seeds,
+    rotSeeds,
+    scales,
+    offsets: new Float32Array(DEBRIS_COUNT * 3),
+    matrix: new THREE.Matrix4(),
+    pos: new THREE.Vector3(),
+    quat: new THREE.Quaternion(),
+    scale: new THREE.Vector3(),
+    euler: new THREE.Euler(),
+    mouseWorld: new THREE.Vector3(),
+    dir: new THREE.Vector3(),
+  };
+}
+
 interface DebrisFieldProps {
-  mouseX: number;
-  mouseY: number;
+  pointer: RefObject<ScenePointer>;
   reducedMotion: boolean;
 }
 
-function DebrisField({ mouseX, mouseY, reducedMotion }: DebrisFieldProps) {
+function DebrisField({ pointer, reducedMotion }: DebrisFieldProps) {
   const meshRef = useRef<THREE.InstancedMesh>(null);
+  const stateRef = useRef<DebrisState | null>(null);
   const { camera } = useThree();
-
-  const stable = useMemo(() => {
-    const base = new Float32Array(DEBRIS_COUNT * 3);
-    const seeds = new Float32Array(DEBRIS_COUNT * 3);
-    const rotSeeds = new Float32Array(DEBRIS_COUNT * 3);
-    const scales = new Float32Array(DEBRIS_COUNT);
-    for (let i = 0; i < DEBRIS_COUNT; i++) {
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      const r = 2.2 + Math.cbrt(Math.random()) * (SPREAD - 2.2);
-      base[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      base[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-      base[i * 3 + 2] = r * Math.cos(phi);
-      seeds[i * 3] = Math.random() * 100;
-      seeds[i * 3 + 1] = Math.random() * 100;
-      seeds[i * 3 + 2] = Math.random() * 100;
-      rotSeeds[i * 3] = Math.random() * Math.PI * 2;
-      rotSeeds[i * 3 + 1] = Math.random() * Math.PI * 2;
-      rotSeeds[i * 3 + 2] = Math.random() * Math.PI * 2;
-      scales[i] = 0.6 + Math.random() * 0.9;
-    }
-    return { base, seeds, rotSeeds, scales };
-  }, []);
-
-  const offsets = useMemo(() => new Float32Array(DEBRIS_COUNT * 3), []);
 
   const geo = useMemo(() => new THREE.TetrahedronGeometry(0.08, 0), []);
   const mat = useMemo(
@@ -62,24 +91,27 @@ function DebrisField({ mouseX, mouseY, reducedMotion }: DebrisFieldProps) {
     []
   );
 
-  const tmpMatrix = useMemo(() => new THREE.Matrix4(), []);
-  const tmpPos = useMemo(() => new THREE.Vector3(), []);
-  const tmpQuat = useMemo(() => new THREE.Quaternion(), []);
-  const tmpScale = useMemo(() => new THREE.Vector3(), []);
-  const tmpEuler = useMemo(() => new THREE.Euler(), []);
-  const mouseWorld = useMemo(() => new THREE.Vector3(), []);
-  const tmpDir = useMemo(() => new THREE.Vector3(), []);
+  useEffect(
+    () => () => {
+      geo.dispose();
+      mat.dispose();
+    },
+    [geo, mat]
+  );
 
   useFrame((state, delta) => {
     const mesh = meshRef.current;
     if (!mesh) return;
+    const s = (stateRef.current ??= createDebrisState());
     const time = state.clock.elapsedTime;
-    const { base, seeds, rotSeeds, scales } = stable;
+    const { base, seeds, rotSeeds, scales, offsets, mouseWorld } = s;
 
-    tmpDir.set(mouseX, mouseY, 0.5).unproject(camera);
-    tmpDir.sub(camera.position).normalize();
-    const dist = -camera.position.z / tmpDir.z;
-    mouseWorld.copy(camera.position).add(tmpDir.multiplyScalar(dist));
+    const mouseX = pointer.current?.x ?? 0;
+    const mouseY = pointer.current?.y ?? 0;
+    s.dir.set(mouseX, mouseY, 0.5).unproject(camera);
+    s.dir.sub(camera.position).normalize();
+    const dist = -camera.position.z / s.dir.z;
+    mouseWorld.copy(camera.position).add(s.dir.multiplyScalar(dist));
 
     for (let i = 0; i < DEBRIS_COUNT; i++) {
       const i3 = i * 3;
@@ -129,24 +161,23 @@ function DebrisField({ mouseX, mouseY, reducedMotion }: DebrisFieldProps) {
         offsets[i3 + 2] = oz;
       }
 
-      tmpPos.set(bx + ox, by + oy, bz + oz);
+      s.pos.set(bx + ox, by + oy, bz + oz);
 
       if (!reducedMotion) {
-        tmpEuler.set(
+        s.euler.set(
           rotSeeds[i3] + time * 0.3,
           rotSeeds[i3 + 1] + time * 0.4,
           rotSeeds[i3 + 2] + time * 0.2
         );
-        tmpQuat.setFromEuler(tmpEuler);
       } else {
-        tmpEuler.set(rotSeeds[i3], rotSeeds[i3 + 1], rotSeeds[i3 + 2]);
-        tmpQuat.setFromEuler(tmpEuler);
+        s.euler.set(rotSeeds[i3], rotSeeds[i3 + 1], rotSeeds[i3 + 2]);
       }
+      s.quat.setFromEuler(s.euler);
 
-      const s = scales[i];
-      tmpScale.set(s, s, s);
-      tmpMatrix.compose(tmpPos, tmpQuat, tmpScale);
-      mesh.setMatrixAt(i, tmpMatrix);
+      const sc = scales[i];
+      s.scale.set(sc, sc, sc);
+      s.matrix.compose(s.pos, s.quat, s.scale);
+      mesh.setMatrixAt(i, s.matrix);
     }
     mesh.instanceMatrix.needsUpdate = true;
   });
@@ -177,14 +208,13 @@ function Lights() {
 }
 
 interface Lost404SceneProps {
-  mouseX?: number;
-  mouseY?: number;
+  /** Shared, mutable pointer position so mouse moves never re-render React. */
+  pointer: RefObject<ScenePointer>;
   reducedMotion?: boolean;
 }
 
 export function Lost404Scene({
-  mouseX = 0,
-  mouseY = 0,
+  pointer,
   reducedMotion = false,
 }: Lost404SceneProps) {
   return (
@@ -195,11 +225,7 @@ export function Lost404Scene({
         camera={{ position: [0, 0, 8], fov: 60 }}
       >
         <Lights />
-        <DebrisField
-          mouseX={mouseX}
-          mouseY={mouseY}
-          reducedMotion={reducedMotion}
-        />
+        <DebrisField pointer={pointer} reducedMotion={reducedMotion} />
         <AdaptiveDpr pixelated />
         <AdaptiveEvents />
       </Canvas>

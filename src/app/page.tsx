@@ -4,6 +4,7 @@ import HeroSection from "@/components/sections/HeroSection";
 import AboutSection from "@/components/sections/AboutSection";
 import SkillsSection from "@/components/sections/SkillsSection";
 import ExperienceSection from "@/components/sections/ExperienceSection";
+import AgenticSection from "@/components/sections/AgenticSection";
 import ProjectsSection from "@/components/sections/ProjectsSection";
 import ContactSection from "@/components/sections/ContactSection";
 import { SectionTransition } from "@/components/transitions/SectionTransition";
@@ -22,6 +23,7 @@ export default function Home() {
         <SkillsSection />
         <SectionTransition type="gold-wipe" />
         <ExperienceSection />
+        <AgenticSection />
         <ProjectsSection />
         <SectionTransition type="parallax-layers" />
         <ContactSection />
