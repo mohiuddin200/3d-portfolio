@@ -163,15 +163,35 @@ export default function ProjectPageContent({ project }: Props) {
 
             {/* Links */}
             <div className="space-y-3">
+              {project.storeUrl && (
+                <a
+                  href={project.storeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button className="w-full bg-gold text-black hover:bg-gold-dark">
+                    Add to Chrome — Free
+                  </Button>
+                </a>
+              )}
               {project.liveUrl && (
                 <a
                   href={project.liveUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <Button className="w-full bg-gold text-black hover:bg-gold-dark">
-                    View Live Site
-                  </Button>
+                  {project.storeUrl ? (
+                    <Button
+                      variant="outline"
+                      className="w-full border-white/10 text-text-primary hover:border-gold hover:text-gold"
+                    >
+                      Visit Website
+                    </Button>
+                  ) : (
+                    <Button className="w-full bg-gold text-black hover:bg-gold-dark">
+                      View Live Site
+                    </Button>
+                  )}
                 </a>
               )}
               {project.githubUrl && (

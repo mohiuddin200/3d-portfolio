@@ -239,6 +239,21 @@ export default function ProjectsSection() {
                         </svg>
                       </Link>
                     </Button>
+                    {project.storeUrl && (
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="border-white/20 text-white hover:border-white/40 hover:bg-white/10 hover:text-white"
+                      >
+                        <a
+                          href={project.storeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Add to Chrome
+                        </a>
+                      </Button>
+                    )}
                     {project.githubUrl && (
                       <Button
                         asChild

@@ -9,6 +9,7 @@ export interface Project {
   techStack: string[];
   liveUrl?: string;
   githubUrl?: string;
+  storeUrl?: string;
   featured: boolean;
   badge?: string;
   year: number;

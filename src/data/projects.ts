@@ -63,6 +63,39 @@ export const PROJECTS: Project[] = [
     featured: true,
     year: 2025,
   },
+  {
+    slug: "memento",
+    title: "Memento",
+    shortDescription:
+      "A memento mori for every Chrome new tab — your personal death clock, live to the millisecond, plus real-time births and deaths for your country or the whole world",
+    description:
+      "Memento is my first published Chrome extension: a Manifest V3 new-tab override that turns every tab into a quiet reminder that time is limited. Three answers on first run — birthday, sex and country (217 countries plus World) — drive a hero countdown of the days you likely have left, with a live hh:mm:ss.mmm sub-counter, a daily one-liner (\"≈ 37 summers left. Start now.\") and a thin bar showing today draining. Life expectancy defaults to the World Bank average for your sex and country, or your own estimate. Below it: days and seconds lived with a progress bar, and a real-time row of deaths per second, births today, deaths today and net population change for your country or the world, extrapolated from World Bank crude rates the way Worldometer-style counters work. Outlive the average and it switches to counting bonus days. It ships four themes (Midnight, Dusk, Ember, Paper), canvas ambient backgrounds — an hourglass of falling sand, a rising tide, drifting embers, a heartbeat that sometimes flatlines — that go still under reduced motion, a choice of what the big number counts, your own background photo downscaled on-device, and shortcut chips for favourite sites. Everything stays in chrome.storage.local with no account or analytics; a 7-day cache and a built-in offline baseline mean the page never renders empty. Vanilla HTML, CSS and JS with no build step, covered by Node test suites. Approximate by design — a warning sign, not a diagnosis.",
+    coverImage: "/images/projects/memento-cover.png",
+    screenshots: [
+      "/images/projects/memento-1.png",
+      "/images/projects/memento-2.png",
+      "/images/projects/memento-3.png",
+      "/images/projects/memento-4.png",
+      "/images/projects/memento-5.png",
+      "/images/projects/memento-6.png",
+    ],
+    techStack: [
+      "Chrome Extension (MV3)",
+      "JavaScript",
+      "HTML",
+      "CSS",
+      "Canvas API",
+      "World Bank API",
+      "chrome.storage",
+    ],
+    liveUrl: "https://memento-deathclock.vercel.app",
+    githubUrl: "https://github.com/mohiuddin200/MEMENTO",
+    storeUrl:
+      "https://chromewebstore.google.com/detail/memento-%E2%80%94-death-clock-dea/khkpihpkonaehkepjhdcpjnnjghflecj",
+    badge: "Live on Chrome Web Store",
+    featured: true,
+    year: 2026,
+  },
 ];
 
 export function getProjectBySlug(slug: string): Project | undefined {
