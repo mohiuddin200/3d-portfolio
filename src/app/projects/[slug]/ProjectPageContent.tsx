@@ -162,7 +162,7 @@ export default function ProjectPageContent({ project }: Props) {
             </div>
 
             {/* Links */}
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3">
               {project.storeUrl && (
                 <a
                   href={project.storeUrl}
