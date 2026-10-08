@@ -123,9 +123,16 @@ export default function ProjectPageContent({ project }: Props) {
             <h2 className="mb-6 text-2xl font-semibold text-text-primary">
               About This Project
             </h2>
-            <p className="text-lg leading-relaxed text-text-secondary">
-              {project.description}
-            </p>
+            <div className="space-y-6">
+              {project.description.split("\n\n").map((paragraph) => (
+                <p
+                  key={paragraph}
+                  className="text-lg leading-relaxed text-text-secondary"
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
           </motion.div>
 
           {/* Metadata Sidebar */}

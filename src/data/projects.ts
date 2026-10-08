@@ -67,9 +67,15 @@ export const PROJECTS: Project[] = [
     slug: "memento",
     title: "Memento",
     shortDescription:
-      "A memento mori for every Chrome new tab — your personal death clock, live to the millisecond, plus real-time births and deaths for your country or the whole world",
+      "A memento mori for every Chrome new tab: the days you have left, ticking down live, beside the world's real-time births and deaths",
     description:
-      "Memento is my first published Chrome extension: a Manifest V3 new-tab override that turns every tab into a quiet reminder that time is limited. Three answers on first run — birthday, sex and country (217 countries plus World) — drive a hero countdown of the days you likely have left, with a live hh:mm:ss.mmm sub-counter, a daily one-liner (\"≈ 37 summers left. Start now.\") and a thin bar showing today draining. Life expectancy defaults to the World Bank average for your sex and country, or your own estimate. Below it: days and seconds lived with a progress bar, and a real-time row of deaths per second, births today, deaths today and net population change for your country or the world, extrapolated from World Bank crude rates the way Worldometer-style counters work. Outlive the average and it switches to counting bonus days. It ships four themes (Midnight, Dusk, Ember, Paper), canvas ambient backgrounds — an hourglass of falling sand, a rising tide, drifting embers, a heartbeat that sometimes flatlines — that go still under reduced motion, a choice of what the big number counts, your own background photo downscaled on-device, and shortcut chips for favourite sites. Everything stays in chrome.storage.local with no account or analytics; a 7-day cache and a built-in offline baseline mean the page never renders empty. Vanilla HTML, CSS and JS with no build step, covered by Node test suites. Approximate by design — a warning sign, not a diagnosis.",
+      [
+        "Every time you open a new tab, Memento shows you one number: the days you likely have left. It ticks down live, to the millisecond, while you decide what to do next.",
+        "Below it, the world keeps moving. A live counter shows how many people were born today and how many have died, in your country or across the whole world. Every one of those deaths was someone who also thought there would be more time. On any day, that number could include you.",
+        "It isn't meant to be morbid. It's a memento mori, the old reminder that life is not permanent, placed right where we lose the most minutes. Every second matters. Spend today on work that counts, on the people who count, on something you'll be glad you did.",
+        "I built it as a small, fun thing for my own browser, and it became my first published Chrome extension. Answer three questions (birthday, sex and country) and the countdown starts, based on World Bank life expectancy and population data. Nothing leaves your device: no account, no tracking.",
+        "Approximate by design. A warning sign, not a diagnosis.",
+      ].join("\n\n"),
     coverImage: "/images/projects/memento-cover.png",
     screenshots: [
       "/images/projects/memento-1.png",
