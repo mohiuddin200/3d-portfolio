@@ -342,13 +342,13 @@ export default function AboutSection() {
               <p className="mt-1 text-xs text-white/40">{ABOUT.education.note}</p>
             </div>
 
-            <div className="shrink-0 sm:w-56">
+            <div className="shrink-0 sm:w-72">
               <div className="flex items-center justify-between text-[11px] uppercase tracking-wider">
                 <span className="text-white/60">
                   Year {ABOUT.education.currentYear} of {ABOUT.education.totalYears}
                 </span>
                 <span className="text-white/30">
-                  {ABOUT.education.startYear} — {ABOUT.education.endYear}
+                  {ABOUT.education.start} — {ABOUT.education.end}
                 </span>
               </div>
               <div className="mt-2 grid grid-cols-4 gap-1">
