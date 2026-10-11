@@ -24,6 +24,16 @@ export const ABOUT = {
     ],
     url: "https://www.aihero.dev/workshops/ai-coding-crash-course",
   },
+  education: {
+    degree: "B.Sc. in Computer Science & Engineering",
+    institution: "Uttara University",
+    location: "Dhaka, Bangladesh",
+    startYear: 2026,
+    endYear: 2030,
+    currentYear: 1,
+    totalYears: 4,
+    note: "Weekend program — classes and exams on Fridays, alongside full-time work.",
+  },
   languages: [
     { name: "Bangla", level: "Native", proficiency: 100 },
     { name: "English", level: "Proficient", proficiency: 85 },

@@ -324,6 +324,45 @@ export default function AboutSection() {
               ))}
             </div>
           </div>
+
+          {/* Education — deliberately low-key, full-width strip */}
+          <div
+            data-col
+            className="md:col-span-3 flex flex-col gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+            style={{ opacity: 0 }}
+          >
+            <div className="min-w-0">
+              <h3 className="text-xs uppercase tracking-widest text-[#FFD700] font-semibold">
+                Education
+              </h3>
+              <p className="mt-1.5 text-sm font-medium text-white/80">
+                {ABOUT.education.degree}
+                <span className="text-white/40"> · {ABOUT.education.institution}</span>
+              </p>
+              <p className="mt-1 text-xs text-white/40">{ABOUT.education.note}</p>
+            </div>
+
+            <div className="shrink-0 sm:w-56">
+              <div className="flex items-center justify-between text-[11px] uppercase tracking-wider">
+                <span className="text-white/60">
+                  Year {ABOUT.education.currentYear} of {ABOUT.education.totalYears}
+                </span>
+                <span className="text-white/30">
+                  {ABOUT.education.startYear} — {ABOUT.education.endYear}
+                </span>
+              </div>
+              <div className="mt-2 grid grid-cols-4 gap-1">
+                {Array.from({ length: ABOUT.education.totalYears }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 rounded-full ${
+                      i < ABOUT.education.currentYear ? "bg-[#FFD700]/70" : "bg-white/[0.08]"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
