@@ -1,11 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { useLenis } from "lenis/react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { SKILLS, SKILL_CATEGORIES } from "@/data/skills";
 import { TechIcon } from "@/data/skill-icons";
+
+const GRID_CLASS = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2";
+
+function SkillRow({ name }: { name: string }) {
+  return (
+    <div className="group flex items-center gap-2.5 rounded-lg border border-white/10 bg-black/40 px-2.5 py-2 hover:border-gold/40 transition-colors duration-300">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/5 border border-white/5 group-hover:bg-white/10 transition-colors duration-300">
+        <TechIcon name={name} className="size-4 text-gold" />
+      </span>
+      <span className="text-white text-xs sm:text-sm font-medium truncate">{name}</span>
+    </div>
+  );
+}
 
 interface FullStackDialogProps {
   open: boolean;
@@ -67,27 +80,27 @@ export function FullStackDialog({ open, onOpenChange }: FullStackDialogProps) {
           ))}
         </div>
 
-        {/* Skills list: compact icon + name rows */}
-        <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-          <AnimatePresence mode="popLayout">
-            {filteredSkills.map((skill, index) => (
-              <motion.div
-                layout
-                key={skill.name}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2, delay: index * 0.015, ease: "easeOut" }}
-                className="group flex items-center gap-2.5 rounded-lg border border-white/10 bg-black/40 px-2.5 py-2 hover:border-gold/40 transition-colors duration-300"
-              >
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-white/5 border border-white/5 group-hover:bg-white/10 transition-colors duration-300">
-                  <TechIcon name={skill.name} className="size-4 text-gold" />
-                </span>
-                <span className="text-white text-xs sm:text-sm font-medium truncate">{skill.name}</span>
-              </motion.div>
+        {/* Skills list: compact icon + name rows.
+            An invisible grid of ALL skills sets the height at every breakpoint, so
+            switching categories never resizes (and re-centres) the dialog. */}
+        <div className="relative">
+          <div aria-hidden className={`${GRID_CLASS} invisible pointer-events-none`}>
+            {SKILLS.map((skill) => (
+              <SkillRow key={skill.name} name={skill.name} />
             ))}
-          </AnimatePresence>
-        </motion.div>
+          </div>
+          <motion.div
+            key={activeCategory}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className={`${GRID_CLASS} absolute inset-0 content-start`}
+          >
+            {filteredSkills.map((skill) => (
+              <SkillRow key={skill.name} name={skill.name} />
+            ))}
+          </motion.div>
+        </div>
       </DialogContent>
     </Dialog>
   );
