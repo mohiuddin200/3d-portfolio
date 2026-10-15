@@ -2,7 +2,7 @@
 
 import { type ReactNode, useEffect } from "react";
 import { ReactLenis, useLenis } from "lenis/react";
-import { gsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useAnimation } from "./AnimationProvider";
 
 function LenisGsapSync() {
@@ -17,6 +17,9 @@ function LenisGsapSync() {
 
     gsap.ticker.add(update);
     gsap.ticker.lagSmoothing(0);
+
+    // Font swap can shift layout above pinned sections; GSAP has no fonts hook of its own.
+    document.fonts?.ready.then(() => ScrollTrigger.refresh());
 
     return () => {
       gsap.ticker.remove(update);

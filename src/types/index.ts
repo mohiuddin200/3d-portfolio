@@ -18,7 +18,6 @@ export interface Project {
 export interface Skill {
   name: string;
   category: SkillCategory;
-  proficiency: number; // 0-100
   icon?: string;
 }
 

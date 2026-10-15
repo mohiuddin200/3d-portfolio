@@ -2,7 +2,7 @@ import { Navigation } from "@/components/layout/Navigation";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import HeroSection from "@/components/sections/HeroSection";
 import AboutSection from "@/components/sections/AboutSection";
-import SkillsSection from "@/components/sections/SkillsSection";
+import BuildJourneySection from "@/components/sections/BuildJourneySection";
 import ExperienceSection from "@/components/sections/ExperienceSection";
 import AgenticSection from "@/components/sections/AgenticSection";
 import ProjectsSection from "@/components/sections/ProjectsSection";
@@ -20,7 +20,7 @@ export default function Home() {
         <SectionTransition type="parallax-fade" />
         <AboutSection />
         <SectionTransition type="slide-up" />
-        <SkillsSection />
+        <BuildJourneySection />
         <SectionTransition type="gold-wipe" />
         <ExperienceSection />
         <AgenticSection />
